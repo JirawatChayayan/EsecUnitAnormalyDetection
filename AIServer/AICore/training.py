@@ -8,45 +8,14 @@ from AICore.models import SPADE
 import glob
 import os
 import time
+from os.path import expanduser
+
 
 class Training():
     def __init__(self):
-        self.initialPath()
         self.callbackResult = None
         self.callbackStatus = None
         self.model = None
-        
-    def createDir(self,path):
-        if not os.path.exists(path):
-            os.makedirs(path)
-    
-    def initialPath(self):
-        pathMain =  '/home/esec-ai/ImgScreenSave'
-        pathWeightModel = '{}/WeightModel'.format(pathMain)
-        self.createDir(pathMain)
-        self.createDir(pathWeightModel)
-        return pathMain,pathWeightModel
-    
-    def weightFileName(self):
-        pathMain,pathWeightModel = self.initialPath()
-        listModel = glob.glob('{}/model-[0-999999999999999].pt'.format(pathWeightModel)) #os.listdir(pathWeightModel)
-        listItem = [0]
-        for file in listModel:
-            listItem.append(int(os.path.basename(file)[6:-3]))
-        newPath = '{}/model-{}.pt'.format(pathWeightModel,max(listItem)+1)
-        return newPath
-    
-    def weightFileNamelatest(self):
-        try:
-            pathMain,pathWeightModel = self.initialPath()
-            listModel = glob.glob('{}/model-[0-999999999999999].pt'.format(pathWeightModel)) #os.listdir(pathWeightModel)
-            listItem = []
-            for file in listModel:
-                listItem.append(int(os.path.basename(file)[6:-3]))
-            newPath = '{}/model-{}.pt'.format(pathWeightModel,max(listItem))
-            return newPath
-        except:
-            raise Exception("Don't have model.")
 
     def imgsToBytes(self,imgPath :str,boxCrop : tuple = None):
         img = None
@@ -149,7 +118,6 @@ class Training():
         del image_test
         return result
 
-
     def resultPublish(self,status,percentage = 0,message = ""):
         param = {
             "status":status,
@@ -169,7 +137,7 @@ class Training():
 
 
 def listImage():
-    list = glob.glob('{}/*.png'.format('/home/esec-ai/Img'))
+    list = glob.glob('{}{}/*.png'.format(expanduser("~"),'/Img'))
     return list
 
 if __name__ == '__main__':

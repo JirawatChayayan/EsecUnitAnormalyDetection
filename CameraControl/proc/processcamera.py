@@ -5,7 +5,7 @@ import threading
 from proc.mqtt import MQTT
 from proc.serialConnect import TriggerCommunication,ModeRun
 from proc.camera import Camera,CameraMode
-
+from os.path import expanduser
 
 class ProcessCamera:
     def __init__(self):
@@ -45,7 +45,7 @@ class ProcessCamera:
             os.makedirs(path)
     
     def initialPath(self):
-        pathMain =  '/home/esec-ai/ImgScreenSave'
+        pathMain =  '{}/ImgScreenSave'.format(expanduser("~"))
         pathSetup = '{}/SetupMode'.format(pathMain)
         pathProcess = '{}/ProcessMode'.format(pathMain)
         pathSetupTrain = '{}/Train'.format(pathSetup)

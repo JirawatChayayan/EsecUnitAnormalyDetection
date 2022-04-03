@@ -13,6 +13,8 @@ class ModeRun(enum.Enum):
 class TriggerCommunication:
     def __init__(self):
         self.port = '/dev/ttyUSB0'
+        if(sys.platform == 'win32'):
+            self.port = 'COM3'
         self.buadrate = 115200
         self.serialHandle = None
         self.stopped = threading.Event()

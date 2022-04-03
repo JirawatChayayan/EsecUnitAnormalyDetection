@@ -2,7 +2,7 @@ import sys
 import os
 from filecontrol.datamodel import ImgMode, ImgModel
 import natsort
-
+from os.path import expanduser
 
 class FileProcess:
     def __init__(self):
@@ -13,7 +13,7 @@ class FileProcess:
             os.makedirs(path)
     
     def initialPath(self):
-        self.pathMain =  '/home/esec-ai/ImgScreenSave'
+        self.pathMain =  '{}/ImgScreenSave'.format(expanduser("~"))
         self.pathSetup = '{}/SetupMode'.format(self.pathMain)
         self.pathProcess = '{}/ProcessMode'.format(self.pathMain)
         self.pathSetupTrain = '{}/Train'.format(self.pathSetup)

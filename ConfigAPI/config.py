@@ -1,5 +1,6 @@
 import os
 import json
+from os.path import expanduser
 
 class AIConfig():
     def __init__(self):
@@ -55,7 +56,7 @@ class AIConfig():
             os.makedirs(config_dir)
 
     def pathConfig(self):
-        return '/home/esec-ai/ImgScreenSave/Config'
+        return '{}/ImgScreenSave/Config'.format(expanduser("~"))
     
     def loadConfig(self):
         try:

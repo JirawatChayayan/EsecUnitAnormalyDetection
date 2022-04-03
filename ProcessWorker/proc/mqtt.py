@@ -46,7 +46,6 @@ class MQTT:
         self.mqtt_client.subscribe(topic,qos=0)
 
     def publish(self,msg):
-        print(msg)
         if(self.MQTTConnected):
             _,topic = self.topic()
             self.mqtt_client.publish(topic,msg)
@@ -55,7 +54,6 @@ class MQTT:
         topic,_ = self.topic()
         data = str(msg.payload.decode("utf-8"))
         if(msg.topic == topic):
-            print(data)
             if(self.callback is not None):
                 mode = json.loads(data)['modeRun']
                 if(mode == 1):
