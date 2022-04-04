@@ -1,6 +1,6 @@
 import sys
 import os
-from filecontrol.datamodel import ImgMode, ImgModel
+from filecontrol.datamodel import ImgFile, ImgMode, ImgModel
 import natsort
 from os.path import expanduser
 
@@ -59,7 +59,24 @@ class FileProcess:
             return self.pathSetupTest
         else:
             return None
-   
+    
+    def readImage(self,imgFile : ImgFile):
+        try:
+            path = imgFile.mode
+            mainpath = self.getpath(path)
+            if(mainpath == None):
+                print('Not found Path {}'.format(path))
+                return None
+            strFullpath = os.path.join(mainpath,os.path.basename(imgFile.imgfilename))
+            if os.path.exists(strFullpath):
+                #os.remove(strFullpath)
+                return strFullpath
+            else:
+                print("File {} does not exist".format(imgFile.imgfilename))
+                return None
+        except:
+            return None
+
     def deleteImgList(self,imgDetail: ImgModel):
         try:
             path = imgDetail.mode

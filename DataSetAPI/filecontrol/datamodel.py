@@ -12,3 +12,7 @@ class ImgMode (str, Enum):
 class ImgModel(BaseModel):
     mode: ImgMode
     imgList: list
+
+class ImgFile(BaseModel):
+    mode: ImgMode
+    imgfilename: str

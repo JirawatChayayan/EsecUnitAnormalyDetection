@@ -4,10 +4,13 @@ import uvicorn
 from starlette.middleware.cors import CORSMiddleware
 import sys
 import os
-from filecontrol.datamodel import ImgMode,ImgModel
+from filecontrol.datamodel import ImgFile, ImgMode,ImgModel
 from filecontrol.file_control import FileProcess
 import threading 
 from fastapi.responses import RedirectResponse
+from PIL import Image
+from io import BytesIO
+import base64
 
 lock = threading.Lock()
 
@@ -48,6 +51,59 @@ def get_image(imgMode: ImgMode,response:Response):
     if(res == None):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return res
+
+@fileControl.get("/imagesthumbnail/{imgMode}/{size}",status_code=200)
+def get_image_thumbnail(imgMode: ImgMode,size : int,response:Response):
+    res = []
+    lock.acquire()
+    try:
+        imgList = FileProcess().listImg(imgMode)
+        for i in imgList['imgList']:
+            try:
+                img = Image.open(i).resize((size,size))
+                buffered = BytesIO()
+                img.save(buffered, format="PNG")
+                img_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
+                resimg = "data:image/png;base64,{}".format(img_str)
+                res.append({
+                    'img': resimg,
+                    'fileName' : os.path.basename(i)
+                })
+                del buffered
+                del img_str
+                del resimg
+            except:
+                pass
+    except Exception as ex:
+        print(ex)
+        res = None
+    lock.release()
+    if(res == None):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+@fileControl.post("/getimage",status_code=200)
+def get_image_thumbnail(imgMode: ImgFile,response:Response):
+    res = None
+    lock.acquire()
+    try:
+        imgfile = FileProcess().readImage(imgMode)
+        img = Image.open(imgfile)
+        buffered = BytesIO()
+        img.save(buffered, format="PNG")
+        img_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
+        res = "data:image/png;base64,{}".format(img_str)
+        del buffered
+        del img_str
+    except Exception as ex:
+        print(ex)
+        res = None
+    lock.release()
+    if(res == None):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+
 
 @fileControl.delete("/images/",status_code=200)
 def get_image(dataItem: ImgModel,response:Response):
