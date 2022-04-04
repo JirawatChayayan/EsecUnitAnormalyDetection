@@ -121,7 +121,7 @@ class Process:
             self.statusUpdate('Pause for setup machine.')
             return
         if(self.secsgemStoped):
-            self.statusUpdate('Stop machine by secs/gems.')
+            self.statusUpdate('Stop machine by secs/gems.',StatusLevel.WARNING)
             return
         if(self.conf is None):
             self.statusUpdate('Config Machine error.',StatusLevel.ERROR)
