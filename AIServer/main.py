@@ -1,20 +1,32 @@
+from distutils.log import debug
+from statistics import mode
 from threading import Thread
 from typing import List
+from cv2 import threshold
 
 from matplotlib.transforms import Bbox
 import json
 import glob
 from fastapi import FastAPI,Response, status, APIRouter
+from sqlalchemy import true
 import uvicorn
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from AICore.training import Training
+import time
 training = Training()
 
 
 class Item(BaseModel):
     imgList:list
     bbox : tuple = None 
+
+class InferModel(BaseModel):
+    imgList:list
+    bbox : tuple = None
+    threshold : int = None
+
+
 
 app = FastAPI(
     title="AI Training",
@@ -40,13 +52,12 @@ def listImage():
     return list
 
 inProcess = False
-
+model = False
 def trainingProc(imgs,bbox= None):
     global inProcess,training
     inProcess = True
     result = ""
     try:
-
         training.train(imgs,bbox)
         # del training
         # del Training
@@ -57,12 +68,17 @@ def trainingProc(imgs,bbox= None):
         inProcess = False
     return result
 
-def inference(imgs,bbox= None):
-    global inProcess,training
+def inference(imgs,bbox= None,threshold = None):
+    global inProcess,training,model
     inProcess = True
     result = None
     try:
-        result = training.predict(imgs,bbox)
+        if(training.model == None):
+            model = False
+            result = None
+        else:
+            result = training.predict(imgs,bbox,threshold)
+            model = True
     except Exception as ex:
         print("Training_fail {}".format(ex))
         result = None
@@ -70,10 +86,50 @@ def inference(imgs,bbox= None):
         inProcess = False
     return result
     
+def inference_disp(imgs,bbox= None):
+    global inProcess,training,model
+    inProcess = True
+    result = None
+    try:
+        if(training.model == None):
+            model = False
+            result = None
+        else:
+            result = training.predict_disp(imgs,bbox)
+            model = True
+    except Exception as ex:
+        print("Training_fail {}".format(ex))
+        result = None
+    finally:
+        inProcess = False
+    return result
+
+def getModel():
+    global inProcess,training,model
+    try:
+        if(training.model == None):
+            model = False
+        else:
+            model = True
+    except:
+        model = False
+    return model
+
+def getOntraining():
+    global training
+    try:
+        if(training.onTraining):
+            return True
+        else:
+            return False
+    except:
+        return False
+
 
 @ai.post("/train",status_code=200)
 def train(item :Item,response:Response):
     global inProcess
+    t1 = time.perf_counter()
     if(inProcess):
         response.status_code = 401
         return "inProcess"
@@ -81,23 +137,49 @@ def train(item :Item,response:Response):
     #print(result)
     if(result == "finished"):
         response.status_code = 200
+        t2 = time.perf_counter()
+        print(f'Finished in {round(t2-t1, 2)} second(s)')
     else:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return result
 
 @ai.post("/infer",status_code=200)
-def infer(item :Item,response:Response):
+def infer(item :InferModel,response:Response):
     global inProcess
     if(inProcess):
         response.status_code = 401
         return "inProcess"
-    result = inference(item.imgList,item.bbox)
+    if(getOntraining()):
+        response.status_code = 403
+        return "OnTraining"
+    if(getModel() == False):
+        response.status_code = 405
+        return "noModel"
+    result = inference(item.imgList,item.bbox,item.threshold)
     if(result is not None):
         response.status_code = 200
     else:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return result
 
+@ai.post("/infer_disp",status_code=200)
+def infer(item :Item,response:Response):
+    global inProcess
+    if(inProcess):
+        response.status_code = 401
+        return "inProcess"
+    if(getOntraining()):
+        response.status_code = 403
+        return "OnTraining"
+    if(getModel() == False):
+        response.status_code = 405
+        return "noModel"
+    result = inference_disp(item.imgList,item.bbox)
+    if(result is not None):
+        response.status_code = 200
+    else:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return result
 
 app.include_router(ai)
 
@@ -112,7 +194,7 @@ def shutdown():
 
 if __name__ == '__main__':
     try:
-        uvicorn.run(app, host="0.0.0.0", port=8083, log_level="info")
+        uvicorn.run(app, host="0.0.0.0", port=8083, log_level="info" ,debug = True)
     except KeyboardInterrupt:
         pass
         

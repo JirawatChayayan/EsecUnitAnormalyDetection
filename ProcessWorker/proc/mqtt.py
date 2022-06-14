@@ -1,3 +1,4 @@
+from platform import mac_ver
 import paho.mqtt.client as mqtt
 import json
 import time
@@ -14,6 +15,78 @@ class MQTT:
         self.callback = None
         self.connectMqtt()
 
+
+        self.setCountRate = False
+        self.StartedCount = False
+        self.allTimeProc = []
+        self.lastTime = 0
+
+    def toggleCounter(self):
+        if(self.setCountRate == False):
+            return
+        if(self.StartedCount == False):
+            self.lastTime = time.perf_counter()
+            self.StartedCount = True
+        else:
+            t = int((time.perf_counter()-self.lastTime)*1000)
+            self.allTimeProc.append(t)
+            self.StartedCount = False
+            self.lastTime = 0
+        pass
+
+    def average(self,lst):
+        return sum(lst) / len(lst)
+
+    def topicRateCounter(self,maxProcessTime,intervalScan = 5):
+        counterlen = len(self.allTimeProc)
+        offset = 100
+        if(counterlen == 0):
+            self.allTimeProc = []
+            return -1,-1,-1
+        try:
+            
+            t1 = int((intervalScan *1000)/(maxProcessTime+(offset*3)))
+            t2 = int((intervalScan *1000)/(maxProcessTime))
+            print("##CAL##")
+            print(t1)
+            print(t2)
+            print(counterlen)
+            print((intervalScan *1000))
+            print(maxProcessTime)
+            print("#######")
+            if(t1>2 and t2 > 3):
+                if(counterlen < t1-2 or counterlen > t2):
+                    self.allTimeProc = []
+                    return -1,-1,-1
+        except:
+            pass
+        print('OK')
+        filterData = []
+        procTimeTop = maxProcessTime + offset
+        procTimeBottom = maxProcessTime - offset
+        # print("CAL")
+        # print(procTimeBottom)
+        # print(procTimeTop)
+        for a in self.allTimeProc:
+            #print(a)
+            if(a > procTimeBottom  and a < procTimeTop):
+                #print(a)
+                filterData.append(a)
+        try:
+            minCount = min(filterData)
+        except:
+            minCount = -1
+
+        try:
+            maxCount = max(filterData)
+        except:
+            maxCount = -1
+        try:
+            avgCount = self.average(filterData)
+        except:
+            avgCount = -1
+        self.allTimeProc = []
+        return avgCount,maxCount,minCount
 
     def topic(self):
         #subscribe
@@ -32,12 +105,14 @@ class MQTT:
         except:
             self.MQTTConnected = False
             pass
+    
     def disconnectMQTT(self):
         try:
             self.mqtt_client.disconnect()
             self.mqtt_client.loop_stop()
         except:
             pass
+    
     def onConnectedMqtt(self,client, userdata, flags, rc):
         time.sleep(2)
         print('Connected.')
@@ -54,9 +129,14 @@ class MQTT:
         topic,_ = self.topic()
         data = str(msg.payload.decode("utf-8"))
         if(msg.topic == topic):
-            if(self.callback is not None):
+            try:
                 mode = json.loads(data)['modeRun']
                 if(mode == 1):
-                    self.callback(1)
-                else:
-                    self.callback(2)
+                    self.toggleCounter()
+                if(self.callback is not None):
+                    if(mode == 1):
+                        self.callback(1)
+                    else:
+                        self.callback(2)
+            except:
+                pass

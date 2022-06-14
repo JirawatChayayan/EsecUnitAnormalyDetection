@@ -1,0 +1,171 @@
+html,body{
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+    font-family: Sans-serif;
+}
+.top-header{
+    background-color: rgb(81, 3, 209);
+    color: white;
+    height: 50px;
+}
+.app-name{
+    padding: 0px 20px;
+    margin: 10px;
+    color: white;
+    display: inline-block;
+    font-size: 25px;
+    text-decoration: none;
+    
+}
+.menu-item{
+    color: white;
+    padding: 15px;
+    text-decoration: none;
+    display: inline-block;
+    float: right;
+}
+.menu-item-dim{
+    color:  rgb(115, 117, 119);
+    margin: 0px;
+    display: inline-block;
+    float: right;
+}
+.page-name{
+    text-align: center;
+    font-size: 50px;
+}
+.btn {
+    /* position: absolute; */
+    /* top: 50%;
+    left: 50%; */
+    color: white;
+    background-color: rgb(81, 3, 209);
+    font-size: 16px;
+    margin-top: 10px;
+    padding: 16px 30px;
+    width: 100%;
+    height: 55px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    text-align: center;
+    float: none;
+    display: inline;
+    /* transform: translateX(50%); */
+}
+.content{
+    padding-left: 10%;
+    padding-right: 10%;
+}
+.form-container{
+    border: 0px solid #fff; 
+    padding: 40px 60px; 
+    margin-top:5vh;
+    margin-bottom: 5vh;
+    box-shadow: 0px 0px 23px 3px rgba(81,3,209,0.65);
+    -webkit-box-shadow: 0px 0px 23px 3px rgba(81,3,209,0.65);
+    -moz-box-shadow: 0px 0px 23px 3px rgba(81,3,209,0.65);
+    left: 50%;
+}
+table, th, td {
+    border: 1.5px solid rgba(81,3,209,0.65);
+    border-collapse: collapse;
+}
+tfoot{
+    background-color: rgba(180, 150, 228, 0.65);
+}
+.table tr{
+    cursor: pointer;
+}
+tbody tr:hover {
+    background-color: cornflowerblue;
+}
+tbody{
+    display: block;
+    overflow: auto;
+    height: 250px;
+    overflow-x: hidden;
+}
+thead, tfoot, tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+th{
+    height: 50px;
+    width: 100%;
+    background-color: rgb(184, 139, 241);
+}
+td{
+    height: 30px;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+}
+table.center{
+    margin-left: auto;
+    margin-right: auto;
+    width: 1000px;
+}
+table.stoplogcenter{
+    margin-left: auto;
+    margin-right: auto;
+    width: 800px;
+}
+table.ailogcenter{
+    margin-left: auto;
+    margin-right: auto;
+    width: 1100px;
+}
+.table-scroll{
+    height: 300px;
+    text-align: center;
+    /* overflow: auto; */
+    /* border: 2px solid rgb(184, 139, 241); */
+}
+.div-image-res{
+    max-width: 100%;
+    text-align: center;
+}
+.img-res{
+    display: inline-block;
+    max-width: 98%;
+    height: auto;
+    width: 350px;
+}
+.table-default{
+    display: table;
+    border-collapse: separate;
+    border-spacing: 2px;
+    border-color: gray;
+}
+.tr-default{
+    display: table-row;
+    vertical-align: inherit;
+    border-color: inherit;
+}
+.td-default{
+    display: table-cell;
+    vertical-align: inherit;
+}
+figure {
+    border: 1px #cccccc solid;
+    width: 350px;
+    display: inline-block;
+}
+
+figcaption {
+    background-color: black;
+    color: white;
+    font-style: italic;
+    text-align: center;
+    padding: 2px;
+}
+.h3-table-name{
+    text-align: center;
+}
+.selected-row{
+    background-color: rgb(140, 53, 221);
+    color: #fff;
+}

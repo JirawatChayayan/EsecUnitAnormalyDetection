@@ -13,9 +13,10 @@ class FileProcess:
             os.makedirs(path)
     
     def initialPath(self):
-        self.pathMain =  '{}/ImgScreenSave'.format(expanduser("~"))
+        self.pathMain =  '{}/ImgScreenSave'.format('/home/esec-ai') #expanduser("~")
         self.pathSetup = '{}/SetupMode'.format(self.pathMain)
         self.pathProcess = '{}/ProcessMode'.format(self.pathMain)
+        #self.pathProcess = '/home/esec-ai/ramdisk/ProcessMode'
         self.pathSetupTrain = '{}/Train'.format(self.pathSetup)
         self.pathSetupTest = '{}/Test'.format(self.pathSetup)
         self.createDir(self.pathMain)

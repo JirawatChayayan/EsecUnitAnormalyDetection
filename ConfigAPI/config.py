@@ -8,12 +8,29 @@ class AIConfig():
         self.rejectThreshold = 120
         self.stopWhenRejectCount = 1
         self.changeModeWhenProcessTrigCount = 20 
+        self.maxProcessTimePerUnit = 1
         self.useAI = False
         self.inferenceRate = 5
+        self.equipOpn = 'DA'
+        self.cimEquipID = 'TDAE096'
+        self.stopMachine = 'SECS/GEMS'
         self.bboxCrop = [690,490,915,712]
         self.loadConfig()
 
 
+    def setnewbbox(self,bbox :list):
+        try:
+            if(len(bbox) == 4):
+                self.bboxCrop = bbox
+                self.saveconfig()
+                print(self.bboxCrop)
+                return True
+            else:
+                print('ERROR'+' Config format bbox not correct !!! {}'.format(bbox)) 
+                return False
+        except Exception as ex:
+            print('ERROR'+' Config format not correct !!! {}'.format(ex))
+            return False
 
     def setnewConfig(self,newParam):
         try:
@@ -21,16 +38,24 @@ class AIConfig():
             rejectThreshold = int(newParam['rejectThreshold'])
             stopWhenRejectCount = int(newParam['stopWhenRejectCount'])
             changeModeWhenProcessTrigCount = int(newParam['changeModeWhenProcessTrigCount'])
+            maxProcessTimePerUnit = int(newParam['maxProcessTimePerUnit'])
             useAI = bool(newParam['useAI'])
             inferenceRate = int(newParam['inferenceRate'])
+            equipOpn = str(newParam['equipOpn'])
+            cimEquipID = str(newParam['cimEquipID'])
+            stopMachine = str(newParam['stopMachine'])
             bboxCrop = list(newParam['bboxCrop'])
 
             self.machineId = machineId
             self.rejectThreshold = rejectThreshold
             self.stopWhenRejectCount = stopWhenRejectCount
             self.changeModeWhenProcessTrigCount = changeModeWhenProcessTrigCount
+            self.maxProcessTimePerUnit = maxProcessTimePerUnit
             self.useAI = useAI
             self.inferenceRate = inferenceRate
+            self.equipOpn = equipOpn
+            self.cimEquipID = cimEquipID
+            self.stopMachine = stopMachine
             self.bboxCrop = bboxCrop
 
             self.saveconfig()
@@ -45,8 +70,12 @@ class AIConfig():
                     "rejectThreshold" : int(self.rejectThreshold),
                     "stopWhenRejectCount" : int(self.stopWhenRejectCount),
                     "changeModeWhenProcessTrigCount" : int(self.changeModeWhenProcessTrigCount),
+                    "maxProcessTimePerUnit" :int(self.maxProcessTimePerUnit),
                     "useAI" : self.useAI,
                     "inferenceRate" : self.inferenceRate,
+                    "equipOpn" : self.equipOpn,
+                    "cimEquipID" : self.cimEquipID,
+                    "stopMachine" : self.stopMachine,
                     "bboxCrop" : self.bboxCrop
                 }
 

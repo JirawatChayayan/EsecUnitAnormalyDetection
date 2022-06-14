@@ -1,19 +1,19 @@
 class TriggerInput {
   private:
-    byte pin;
+    uint8_t pin;
     unsigned int statemachine;
     unsigned long t1;
     unsigned int waitMs;
     
   public:
-    TriggerInput(byte pin,unsigned int waitMs) 
+    TriggerInput(uint8_t pin,unsigned int waitMs) 
     {
       this->pin = pin;
       this->waitMs = waitMs;
       init();
+      pinMode(pin,INPUT_PULLUP);
     }
     void init() {
-      pinMode(pin, INPUT_PULLUP);
       statemachine=0;
     }
     bool getState()
@@ -54,5 +54,6 @@ class TriggerInput {
                 return false;
                 break;
         }
+        return false;
     }
 };

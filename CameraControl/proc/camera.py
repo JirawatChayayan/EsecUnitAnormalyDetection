@@ -1,3 +1,5 @@
+from concurrent.futures import thread
+import time 
 import cv2 as cv
 import enum
 
@@ -22,6 +24,23 @@ class Camera:
                 self.cam = cv.VideoCapture(self.source)
                 self.cam.set(cv.CAP_PROP_FRAME_WIDTH, width)
                 self.cam.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+                # while(not self.camConnected):
+                #     # if(i > 20):
+                #     #     i= 0
+                #     #     t+=1
+                #     # if(t > 3):
+                #     #     raise Exception("Cannot Connect Camera.")
+                #     # try:
+                #         self.cam = cv.VideoCapture(i)
+                #         self.cam = i
+                #         self.cam.set(cv.CAP_PROP_FRAME_WIDTH, width)
+                #         self.cam.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+                #     except:
+                        
+                #         time.sleep(2)
+                #         print('camera index {}'.format(i))
+                #         i+=1
+                #         pass
             self.camConnected = True
         except Exception as ex:
             print(ex)

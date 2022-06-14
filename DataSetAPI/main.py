@@ -1,3 +1,4 @@
+from distutils.log import debug
 from typing import List, Optional
 from fastapi import FastAPI,Response, status, APIRouter
 import uvicorn
@@ -11,6 +12,7 @@ from fastapi.responses import RedirectResponse
 from PIL import Image
 from io import BytesIO
 import base64
+import time
 
 lock = threading.Lock()
 
@@ -90,9 +92,9 @@ def get_image_thumbnail(imgMode: ImgFile,response:Response):
         imgfile = FileProcess().readImage(imgMode)
         img = Image.open(imgfile)
         buffered = BytesIO()
-        img.save(buffered, format="PNG")
+        img.save(buffered, format="JPEG")
         img_str = str(base64.b64encode(buffered.getvalue()))[2:-1]
-        res = "data:image/png;base64,{}".format(img_str)
+        res = "data:image/jpeg;base64,{}".format(img_str)
         del buffered
         del img_str
     except Exception as ex:
@@ -135,6 +137,6 @@ def shutdown():
 
 if __name__ == "__main__":
     try:
-        uvicorn.run(app, host="0.0.0.0", port=8082, log_level="info")
+        uvicorn.run(app, host="0.0.0.0", port=8082, log_level="info", debug = True)
     except KeyboardInterrupt:
         pass

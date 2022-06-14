@@ -45,9 +45,10 @@ class ProcessCamera:
             os.makedirs(path)
     
     def initialPath(self):
-        pathMain =  '{}/ImgScreenSave'.format(expanduser("~"))
+        pathMain =  '{}/ImgScreenSave'.format('/home/esec-ai') #expanduser("~")
         pathSetup = '{}/SetupMode'.format(pathMain)
         pathProcess = '{}/ProcessMode'.format(pathMain)
+        #pathProcess = '/home/esec-ai/ramdisk/ProcessMode'
         pathSetupTrain = '{}/Train'.format(pathSetup)
         pathSetupTest = '{}/Test'.format(pathSetup)
         self.createDir(pathMain)
@@ -88,7 +89,7 @@ class ProcessCamera:
     def connect(self):
         self.initialPath()
         self.mqtt.connectMqtt()
-        self.cam.connection(1280,720)
+        self.cam.connection(1920,1080)
         if(self.cam.camConnected == False):
             self.disconnect()
             return False

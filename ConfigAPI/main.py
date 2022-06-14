@@ -1,5 +1,6 @@
 from ast import Str
 from distutils.command.config import config
+from distutils.log import debug
 from tokenize import String
 from typing import List, Optional
 from fastapi import FastAPI,Response, status, APIRouter
@@ -18,9 +19,12 @@ class ConfigModel(BaseModel):
     rejectThreshold:int = 120
     stopWhenRejectCount:int = 1
     changeModeWhenProcessTrigCount:int = 20 
+    maxProcessTimePerUnit:int = 1
     useAI:bool = False
     inferenceRate:int = 5
-    bboxCrop:list = [690,490,915,712]
+    equipOpn:str = 'DA'
+    cimEquipID:str = 'TDAE096'
+    stopMachine = 'SECS/GEMS'
 
 app = FastAPI(
     title="Config Files",
@@ -54,10 +58,14 @@ def update_config(dataItem: ConfigModel,response:Response):
         conf = AIConfig()
         conf.machineId = dataItem.machineId
         conf.changeModeWhenProcessTrigCount = dataItem.changeModeWhenProcessTrigCount
+        conf.maxProcessTimePerUnit = dataItem.maxProcessTimePerUnit
         conf.rejectThreshold = dataItem.rejectThreshold
         conf.stopWhenRejectCount = dataItem.stopWhenRejectCount
         conf.useAI = dataItem.useAI
         conf.inferenceRate = dataItem.inferenceRate
+        conf.equipOpn = dataItem.equipOpn
+        conf.cimEquipID = dataItem.cimEquipID
+        conf.stopMachine = dataItem.stopMachine
         conf.saveconfig()
         res = True
     except:
@@ -67,6 +75,23 @@ def update_config(dataItem: ConfigModel,response:Response):
     if(res == False):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return res
+
+@con.post("/roi",status_code=200)
+def update_config(bbox: list,response:Response):
+    res = False
+    lock.acquire()
+    try:
+        if(bbox is not None):
+            res = AIConfig().setnewbbox(bbox)
+    except:
+        res = False
+    finally:
+        lock.release()
+    if(res == False):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+
 
 @con.get("",status_code=200)
 def get_config(response:Response):
@@ -100,6 +125,6 @@ def shutdown():
 
 if __name__ == "__main__":
     try:
-        uvicorn.run(app, host="0.0.0.0", port=8084, log_level="info")
+        uvicorn.run(app, host="0.0.0.0", port=8084, log_level="info",debug = True)
     except KeyboardInterrupt:
         pass

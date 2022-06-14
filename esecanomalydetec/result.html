@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Abnormally Detection</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../css/result.css">
+    </head>
+    <body>
+        <header class="top-header">
+            <a class="app-name" href="home.html">Abnormally Detection</a>
+            <a class="menu-item" onclick="logout()">Logout</a>
+            <a class="menu-item" id="signup" href="signup.html">SignUp</a>
+            <a class="menu-item" style="color :rgb(115, 117, 119);">Result</a>
+            <a class="menu-item" id="menuconfig" href="config.html">Config</a>
+            <a class="menu-item" id="test" href="testing.html">Testing</a>
+            <a class="menu-item" href="training.html">Training</a>
+            <a class="menu-item" href="status.html">Status</a>
+        </header>
+        <section class="content">
+            <h1 class="page-name">Abnormally Result</h1>
+            <!-- <div class="table-scroll"> -->
+            <h3 class="h3-table-name">REJECT RESULT TABLE</h3>
+            <table class="center" id="tb_result">
+                <thead>
+                    <tr>
+                        <th>Image name</th>
+                        <th>Score Min</th>
+                        <th>Score Max</th>
+                        <th>Anormality Max Score Threshold</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            </br>
+            <!-- </div> -->
+        </br>
+        <div class="div-image-res">
+            <figure>
+                <img class="img-res" id="imageresult" src="../img/no-image.jpg">
+                <figcaption>Image Raw</figcaption>
+            </figure>
+            <figure>
+                <img class="img-res" id="imageheat" src="../img/no-image.jpg">
+                <figcaption>Image Heat</figcaption>
+            </figure>
+
+        </div>
+        </br>
+        <!-- <div class="table-scroll"> -->
+        <h3 class="h3-table-name">STOP RELEASE LOG TABLE</h3>
+        <table class="stoplogcenter" id="tb_log">
+            <thead>
+                <tr>
+                    <th>Remark</th>
+                    <th>Time Stamp</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        <!-- </div> -->
+        </br>
+        <h3 class="h3-table-name">AI TRAINING LOG</h3>
+        <table class="ailogcenter" id="tb_ai_log">
+            <thead>
+                <tr>
+                    <th>User Training</th>
+                    <th>User Level</th>
+                    <th>nImage Train</th>
+                    <th>ROI Crop Image</th>
+                    <th>Start Train</th>
+                    <th>Finish Train</th>
+                    <th>Remark</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        </br>
+        </section>
+        <script src="../js/script_result.js"></script>
+        <script src="../js/traceur-runtime.js"></script>
+    </body>
+</html>

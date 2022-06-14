@@ -1,20 +1,20 @@
 from typing import Optional
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Response
 import uvicorn
 from starlette.middleware.cors import CORSMiddleware
 from proc.processcamera import ProcessCamera
 from proc.serialConnect import ModeRun
 import sys
 import os
-
-
-
+from proc.getip import GetIPAddress
+import time
+import requests
 
 
 procCam = ProcessCamera()
 
 app = FastAPI(
-    title="SYSTEM CONFIG",
+    title="Camera And IO Control",
     description="EDIT CONFIC SYSTEM BELOW",
     version="1.0.0"
 )
@@ -33,24 +33,18 @@ camRouter = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-# @camRouter.get("/getmode/")
-# def get_mode():
-#     procCam.mqtt.sendModeChange(procCam.trig.modeRun)
-#     return {
-#         "modeRun" : procCam.trig.modeRun,
-#         "isRunning": procCam.trig.serialHandle.is_open and procCam.cam.camConnected
-#     }
-# @camRouter.get("/setmode/{mode}")
-# def get_mode(mode : int):
-#     if(mode == 2):
-#         procCam.trig.sendSerial(ModeRun.Process)
-#     else:
-#         procCam.trig.sendSerial(ModeRun.Setup)
-#     procCam.mqtt.sendModeChange(procCam.trig.modeRun)
-#     return {
-#         "modeRun" : procCam.trig.modeRun,
-#         "isRunning": procCam.trig.serialHandle.is_open and procCam.cam.camConnected
-#     }
+def saveLog(msg):
+    url = "http://0.0.0.0:8085/stop_release_log?remark={}".format(msg.strip())
+    try:
+        response = requests.request("POST", url,timeout=3)
+        print(response.text)
+    except:
+        pass
+
+
+
+is_stopMachine = False
+
 @camRouter.get("/saveImageTrain")
 def get_train():
     if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
@@ -72,15 +66,121 @@ def get_test():
         return True
     return False
 
+@camRouter.get("/setDispConfig/{mcID}")
+def setDisp(mcID:str):
+    #return True
+    if(mcID == None or mcID == "" or mcID == str('{mcid}')):
+        return False
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        procCam.trig.sendInformation(mcID)
+        return True
+    return False
+
+@camRouter.get("/is_stopMachine/",status_code=200)
+def setDisp(response :Response):
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        return procCam.trig.lastStateStopMC
+    response.status_code = 500
+    return False
+
+@camRouter.get("/stopMC/{stop}")
+def stopMC(stop :bool):
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        procCam.trig.sendStopMachine(stop)
+
+        is_stopMachine = stop
+        state = "release"
+        if(stop):
+            state = "stop"
+        msgres = "Machine is {} by manual.".format(state)
+        saveLog(msgres)
+        procCam.trig.sendStopMachine(stop)
+        return True
+    return False
+
+@camRouter.get("/stopMC/{stop}/msg/{msg}")
+def stopMC_msg(stop :bool,msg: str):
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        procCam.trig.sendStopMachine(stop)
+        saveLog(msg)
+        procCam.trig.sendStopMachine(stop)
+        return True
+    return False
+
+
+@camRouter.get("/AllOutput/{on}")
+def allOutput(on :bool):
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        procCam.trig.AllIO(on)
+        return True
+    return False
+
+
+@camRouter.get("/setOutput/{ch}")
+def setOutput(ch :int):
+    if(ch >7 and ch < 1):
+        return False
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        procCam.trig.setIO(ch)
+        return True
+    return False
+
+@camRouter.get("/resetOutput/{ch}")
+def resetOutput(ch: int):
+    if(ch >7 and ch < 1):
+        return False
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        procCam.trig.resetIO(ch)
+        return True
+    return False
 
 @camRouter.on_event("startup")
 def startup():
+    try:
+        print('Reset usb')
+        # os.popen("sudo modprobe -r usbhid && sleep 5 && sudo modprobe usbhid",'w').write("esec-ai\n")
+        # time.sleep(20)
+        print('Reset usb OK')
+    except:
+        print('Reset usb Error')
+        pass
+
+
     procCam.connect()
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        time.sleep(1)
+        procCam.trig.AllIO(False)
+        time.sleep(0.5)
+        procCam.trig.sendStopMachine(False)
+        time.sleep(0.5)
+        procCam.trig.sendStopMachine(False)
+        time.sleep(0.5)
+        procCam.trig.AllIO(False)
+        
+
 
 @camRouter.on_event("shutdown")
 def shutdown():
+    time.sleep(2)
+    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+        time.sleep(1)
+        procCam.trig.AllIO(False)
+        time.sleep(0.5)
+        procCam.trig.sendStopMachine(False)
+        time.sleep(0.5)
+        procCam.trig.sendStopMachine(False)
+        time.sleep(0.5)
+        procCam.trig.AllIO(False)
     procCam.stopped.set()
     procCam.disconnect()
+    try:
+        print('Reset usb')
+        os.popen("sudo modprobe -r usbhid && sleep 5 && sudo modprobe usbhid",'w').write("esec-ai\n")
+        time.sleep(10)
+        print('Reset usb OK')
+    except:
+        print('Reset usb Error')
+        pass
     try:
         sys.exit(0)
     except SystemExit:
@@ -90,7 +190,8 @@ app.include_router(camRouter)
 
 if __name__ == "__main__":
     try:
-        uvicorn.run(app, host="0.0.0.0", port=8081, log_level="info")
+        #ip,mac = GetIPAddress().getIt()
+        uvicorn.run(app, host="0.0.0.0", port=8081, log_level="info", debug = True)
     except KeyboardInterrupt:
         pass
 

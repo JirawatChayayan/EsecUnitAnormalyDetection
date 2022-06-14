@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Abnormally Detection</title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="../css/status.css">
+    </head>
+    <body>
+        <header class="top-header">
+            <a class="app-name" href="home.html">Abnormally Detection</a>
+            <a class="menu-item" onclick="logout()">Logout</a>
+            <a class="menu-item" id="signup" href="signup.html">SignUp</a>
+            <a class="menu-item" id="result" href="result.html">Result</a>
+            <a class="menu-item" id="menuconfig" href="config.html">Config</a>
+            <a class="menu-item" href="testing.html">Testing</a>
+            <a class="menu-item" href="training.html">Training</a>
+            <a class="menu-item" style="color :rgb(115, 117, 119);">Status</a>
+        </header>
+        <section class="content">
+            <h1 class="page-name">Abnormally Status</h1>
+                <div class="form-container">
+                    <!-- <button class="btn btn-stop" id="btnstatus" onclick="send_request_machine()"></button></br> -->
+                    <img class="img-status" src="./img/release.png" id="statusImg"/>
+                    <br>
+                    <h1 class="label-status">Machine state : </h1>
+                    <h1 class="label-status" id="labelstatus" style="color: green;">Release</h1>
+                    <br>
+                    <button class="btn2" id="btnChangeState" onclick="send_request_machine()">Change Machine State</button>
+                    </br>
+                    </br>
+                    <label class="last-stop-msg" id="laststopmsg"></label>
+                </div>
+        </section>
+        <script src="../js/script_status.js" ></script>
+    </body>
+</html>
