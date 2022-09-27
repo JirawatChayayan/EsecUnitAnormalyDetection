@@ -1,3 +1,5 @@
+from concurrent.futures import thread
+import json
 from typing import Optional
 from fastapi import FastAPI, APIRouter, Response
 import uvicorn
@@ -10,7 +12,7 @@ from proc.getip import GetIPAddress
 import time
 import requests
 
-
+time.sleep(50)
 procCam = ProcessCamera()
 
 app = FastAPI(
@@ -40,6 +42,16 @@ def saveLog(msg):
         print(response.text)
     except:
         pass
+
+def getLastState():
+    url = "http://127.0.0.1:8085/stop_release_log/last"
+    payload={}
+    headers = {}
+    response = requests.request("GET", url, headers=headers, data=payload)
+    obj = json.loads(response.text)
+    msg = obj['remark']
+    firstWord = msg.split()[0]
+    return firstWord == "Stop"
 
 
 
@@ -145,17 +157,14 @@ def startup():
         print('Reset usb Error')
         pass
 
-
+    isStop = print(getLastState())
     procCam.connect()
-    if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
-        time.sleep(1)
-        procCam.trig.AllIO(False)
-        time.sleep(0.5)
-        procCam.trig.sendStopMachine(False)
-        time.sleep(0.5)
-        procCam.trig.sendStopMachine(False)
-        time.sleep(0.5)
-        procCam.trig.AllIO(False)
+    procCam.trig.sendStopMachine(isStop)
+    # if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
+    #     time.sleep(0.5)
+    #     procCam.trig.sendStopMachine(False)
+    #     time.sleep(0.5)
+    #     procCam.trig.sendStopMachine(False)
         
 
 
@@ -163,20 +172,14 @@ def startup():
 def shutdown():
     time.sleep(2)
     if(procCam.trig.serialHandle.is_open and procCam.cam.camConnected):
-        time.sleep(1)
-        procCam.trig.AllIO(False)
-        time.sleep(0.5)
         procCam.trig.sendStopMachine(False)
         time.sleep(0.5)
-        procCam.trig.sendStopMachine(False)
-        time.sleep(0.5)
-        procCam.trig.AllIO(False)
     procCam.stopped.set()
     procCam.disconnect()
     try:
         print('Reset usb')
-        os.popen("sudo modprobe -r usbhid && sleep 5 && sudo modprobe usbhid",'w').write("esec-ai\n")
-        time.sleep(10)
+        # os.popen("sudo modprobe -r usbhid && sleep 5 && sudo modprobe usbhid",'w').write("esec-ai\n")
+        # time.sleep(10)
         print('Reset usb OK')
     except:
         print('Reset usb Error')
@@ -190,6 +193,7 @@ app.include_router(camRouter)
 
 if __name__ == "__main__":
     try:
+        
         #ip,mac = GetIPAddress().getIt()
         uvicorn.run(app, host="0.0.0.0", port=8081, log_level="info", debug = True)
     except KeyboardInterrupt:

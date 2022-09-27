@@ -59,8 +59,15 @@ class Process:
     def initialPath(self):
         pathMain =  '{}/EsecUnitAnormalyDetection/Startup/logs'.format(expanduser("~"))
         pathlog = '{}/logworker'.format(pathMain)
+        self.pathImg = '{}/ImgScreenSave'.format(expanduser("~"))
+        self.pathSetup = '{}/SetupMode'.format(self.pathImg)
+        self.pathProcess = '{}/ProcessMode'.format(self.pathImg)
+        self.pathCopyimg = '{}/Reject'.format(self.pathSetup)
         self.createDir(pathMain)
         self.createDir(pathlog)
+        self.createDir(self.pathImg)
+        self.createDir(self.pathProcess)
+        self.createDir(self.pathCopyimg)
         x = datetime.datetime.now()
         return pathMain,pathlog+'/log {}.log'.format(x.strftime('%Y-%m-%d'))
 
@@ -152,14 +159,15 @@ class Process:
             self.statusUpdate('AI Server is busy',StatusLevel.WARNING)
             self.inProcess = False
             return
-        thr = threading.Thread(target=self.deleteImg, args=[imgs['imgList']])
-        thr.start()
+        # thr = threading.Thread(target=self.deleteImg, args=[imgs['imgList']])
+        # thr.start()
         rejCount = self.resultProc(res)
         self.rejectCounter+= rejCount
         if(self.rejectCounter >= self.conf['stopWhenRejectCount']):
             self.rejectCounter = 0
             self.stopMc()
-        thr.join()
+        self.deleteImg(imgs['imgList'])
+        # thr.join()
         self.inProcess = False
 
     def stopMc(self):
@@ -184,8 +192,7 @@ class Process:
 
     def getStopMc(self):
         try:
-            #http://192.168.137.159:8081/camcontrol/is_stopMachine/
-            url = "http://192.168.137.159:8081/camcontrol/is_stopMachine/"
+            url = "http://127.0.0.1:8081/camcontrol/is_stopMachine/"
             response = requests.request("GET", url,timeout=5)
             if(response.status_code != 200):
                 self.statusUpdate('Can not connect stop machine server.',StatusLevel.ERROR)
@@ -200,8 +207,7 @@ class Process:
             msg = "Stop%20machine%20by%20AI"
             if(message is not None):
                 msg = message.replace(' ', '%20')
-            #http://192.168.137.159:8081/camcontrol/stopMC/true
-            url = "http://192.168.137.159:8081/camcontrol/stopMC/true/msg/{}".format(msg)
+            url = "http://127.0.0.1:8081/camcontrol/stopMC/true/msg/{}".format(msg)
             response = requests.request("GET", url,timeout=5)
             if(response.status_code != 200):
                 self.statusUpdate('Can not connect stop machine server.',StatusLevel.ERROR)
@@ -284,7 +290,7 @@ class Process:
     def resultProc(self,resAll):
         rejectCount = 0
         for res in resAll:
-            if(res['scoreMax'] >= self.conf['rejectThreshold']):
+            if(res['scoreMax'] > self.conf['rejectThreshold']):
                 rejectCount += 1
                 self.saveImgReject(res)
         self.statusUpdate('ImgAll {} haveReject {}'.format(len(resAll),rejectCount))
@@ -292,7 +298,7 @@ class Process:
 
     def saveImgReject(self,objRes):
         try:
-            #self.copyRejectImg(objRes['imgfilename'])
+            self.copyRejectImg(objRes['imgfilename'])
             param = [{
                         "imgRaw": objRes['resultImgInput'],
                         "imgHeatMap": objRes['resultImgHeat'],
@@ -336,8 +342,8 @@ class Process:
 
     def copyRejectImg(self,name):
         try:
-            src = r"/home/esec-ai/ImgScreenSave/ProcessMode/"+name
-            dst = r"/home/esec-ai/ImgScreenSave/rejectSave/"+name
+            src = os.path.join(self.pathProcess,name)
+            dst = os.path.join(self.pathCopyimg,"RETRAIN_" + name)
             shutil.copyfile(src, dst)
         except:
             pass

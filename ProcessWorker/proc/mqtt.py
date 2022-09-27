@@ -21,6 +21,12 @@ class MQTT:
         self.allTimeProc = []
         self.lastTime = 0
 
+        self.dataFromMicro = {
+            "StopMC":True,
+            "Rate":0,
+            "TriggerCount":0
+        }
+
     def toggleCounter(self):
         if(self.setCountRate == False):
             return
@@ -37,62 +43,32 @@ class MQTT:
     def average(self,lst):
         return sum(lst) / len(lst)
 
-    def topicRateCounter(self,maxProcessTime,intervalScan = 5):
-        counterlen = len(self.allTimeProc)
-        offset = 100
-        if(counterlen == 0):
-            self.allTimeProc = []
-            return -1,-1,-1
-        try:
-            
-            t1 = int((intervalScan *1000)/(maxProcessTime+(offset*3)))
-            t2 = int((intervalScan *1000)/(maxProcessTime))
-            print("##CAL##")
-            print(t1)
-            print(t2)
-            print(counterlen)
-            print((intervalScan *1000))
-            print(maxProcessTime)
-            print("#######")
-            if(t1>2 and t2 > 3):
-                if(counterlen < t1-2 or counterlen > t2):
-                    self.allTimeProc = []
-                    return -1,-1,-1
-        except:
-            pass
-        print('OK')
-        filterData = []
-        procTimeTop = maxProcessTime + offset
-        procTimeBottom = maxProcessTime - offset
-        # print("CAL")
-        # print(procTimeBottom)
-        # print(procTimeTop)
-        for a in self.allTimeProc:
-            #print(a)
-            if(a > procTimeBottom  and a < procTimeTop):
-                #print(a)
-                filterData.append(a)
-        try:
-            minCount = min(filterData)
-        except:
-            minCount = -1
-
-        try:
-            maxCount = max(filterData)
-        except:
-            maxCount = -1
-        try:
-            avgCount = self.average(filterData)
-        except:
-            avgCount = -1
-        self.allTimeProc = []
-        return avgCount,maxCount,minCount
+    def topicRateCounter(self,maxProcessTime,interval = 5):
+        intervalScan = 5
+        rate = self.dataFromMicro['Rate'],self.dataFromMicro['Rate'],self.dataFromMicro['Rate']
+        
+        bestCase =  (int)(intervalScan*1000/maxProcessTime)
+        print('Best Case := {}'.format(bestCase))
+        
+        if(rate[0] <= 750):
+            bestCaseOK = (self.dataFromMicro['TriggerCount'] > bestCase-2 and self.dataFromMicro['TriggerCount'] < bestCase+2)
+            RateOK = (maxProcessTime >= rate[0]-100 and maxProcessTime <= rate[0]+100)
+            if(RateOK and bestCaseOK):
+                return rate
+        else:
+            bestCaseOK = (self.dataFromMicro['TriggerCount'] > bestCase-2 and self.dataFromMicro['TriggerCount'] < bestCase+4)
+            RateOK = (maxProcessTime >= rate[0]-250 and maxProcessTime <= rate[0]+400)
+            if(RateOK and bestCaseOK):
+                return rate
+        return -1,-1,-1
+        
 
     def topic(self):
         #subscribe
         sub_grabSignal = '{}/grab'.format(self.machineID)
+        sub_Rate = '{}/Rate'.format(self.machineID)
         pub_statusWorker = '{}/statusWorker'.format(self.machineID)
-        return sub_grabSignal,pub_statusWorker
+        return sub_grabSignal,pub_statusWorker,sub_Rate
     
     def connectMqtt(self):
         if(self.MQTTConnected):
@@ -117,16 +93,17 @@ class MQTT:
         time.sleep(2)
         print('Connected.')
         self.MQTTConnected = True
-        topic,_ = self.topic()
+        topic,_,rate_topic = self.topic()
         self.mqtt_client.subscribe(topic,qos=0)
+        self.mqtt_client.subscribe(rate_topic,qos=0)
 
     def publish(self,msg):
         if(self.MQTTConnected):
-            _,topic = self.topic()
+            _,topic,_ = self.topic()
             self.mqtt_client.publish(topic,msg)
 
     def onMessageMqtt(self,client, userdata,msg):
-        topic,_ = self.topic()
+        topic,_,rate_topic = self.topic()
         data = str(msg.payload.decode("utf-8"))
         if(msg.topic == topic):
             try:
@@ -138,5 +115,11 @@ class MQTT:
                         self.callback(1)
                     else:
                         self.callback(2)
+            except:
+                pass
+        if(msg.topic == rate_topic):
+            try:
+                self.dataFromMicro = json.loads(data)
+                print(self.dataFromMicro)
             except:
                 pass

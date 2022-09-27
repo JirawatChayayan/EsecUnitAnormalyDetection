@@ -30,7 +30,8 @@ def postData():
     mc_id = getConfig()
     if(ip == '127.0.0.1' or mac == None or mc_id == None):
         return
-
+    print(mc_id)
+    print(ip,mac)
     payload = json.dumps({
     "machine_id": mc_id.strip(),
     "machine_ip": ip,

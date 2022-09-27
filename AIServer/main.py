@@ -1,8 +1,12 @@
 from distutils.log import debug
+from genericpath import isfile
 from statistics import mode
 from threading import Thread
+from tkinter.messagebox import NO
 from typing import List
 from cv2 import threshold
+import cv2 as cv
+import numpy as np
 
 from matplotlib.transforms import Bbox
 import json
@@ -14,12 +18,24 @@ from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from AICore.training import Training
 import time
+import requests
+
+import os
+
 training = Training()
 
+time.sleep(1)
 
 class Item(BaseModel):
     imgList:list
+    bbox : tuple = None
+    threshold : int = None 
+
+
+class MatData(BaseModel):
+    img: str
     bbox : tuple = None 
+
 
 class InferModel(BaseModel):
     imgList:list
@@ -86,7 +102,7 @@ def inference(imgs,bbox= None,threshold = None):
         inProcess = False
     return result
     
-def inference_disp(imgs,bbox= None):
+def inference_disp(imgs,bbox= None,threshold = None):
     global inProcess,training,model
     inProcess = True
     result = None
@@ -95,7 +111,7 @@ def inference_disp(imgs,bbox= None):
             model = False
             result = None
         else:
-            result = training.predict_disp(imgs,bbox)
+            result = training.predict_disp(imgs,bbox,threshold)
             model = True
     except Exception as ex:
         print("Training_fail {}".format(ex))
@@ -125,6 +141,28 @@ def getOntraining():
     except:
         return False
 
+def getConfig():
+    url = "http://127.0.0.1:8084/config"
+    payload={}
+    headers = {}
+    response = requests.request("GET", url, headers=headers, data=payload)
+    return json.loads(response.text)
+
+def getImage():
+    url = "http://127.0.0.1:8082/filecontrol/images/SetupTrain"
+    payload={}
+    headers = {}
+    response = requests.request("GET", url, headers=headers, data=payload)
+    return json.loads(response.text)
+
+def selfTraining():
+    try:
+        bbox = getConfig()['bboxCrop']
+        imgs = getImage()['imgList']
+        trainingProc(imgs,bbox)
+    except:
+        pass
+
 
 @ai.post("/train",status_code=200)
 def train(item :Item,response:Response):
@@ -138,6 +176,8 @@ def train(item :Item,response:Response):
     if(result == "finished"):
         response.status_code = 200
         t2 = time.perf_counter()
+        #delete retrain image
+        training.deletefileRej()
         print(f'Finished in {round(t2-t1, 2)} second(s)')
     else:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -174,12 +214,42 @@ def infer(item :Item,response:Response):
     if(getModel() == False):
         response.status_code = 405
         return "noModel"
-    result = inference_disp(item.imgList,item.bbox)
+    result = inference_disp(item.imgList,item.bbox,item.threshold)
     if(result is not None):
         response.status_code = 200
     else:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return result
+
+
+@ai.post("/getbboxoffsetpos",status_code=200)
+def findmatching(item :MatData,response:Response):
+    global inProcess
+    if(inProcess):
+        response.status_code = 401
+        return "inProcess"
+    img = None
+    if os.path.isfile(item.img):
+        img = cv.imread(item.img,0)
+    elif os.path.isfile(training.pathImg+"/SetupMode/Train/"+item.img):
+        img = cv.imread(training.pathImg+"/SetupMode/Train/"+item.img,0)
+    elif os.path.isfile(training.pathImg+"/SetupMode/Train/"+item.img+".png"):
+        img = cv.imread(training.pathImg+"/SetupMode/Train/"+item.img+".png",0)
+    elif os.path.isfile(training.pathImg+"/SetupMode/Train/"+item.img+".jpg"):
+        img = cv.imread(training.pathImg+"/SetupMode/Train/"+item.img+".jpg",0)
+    else:
+        response.status_code = 404
+        return "Image Not found !!!"
+    result = None
+    try:
+        return training.findMatchingPThee(img,item.bbox,True)
+    except:
+        response.status_code = 500
+        return "Error to find matching"
+
+    
+
+
 
 app.include_router(ai)
 
@@ -194,6 +264,7 @@ def shutdown():
 
 if __name__ == '__main__':
     try:
+        selfTraining()
         uvicorn.run(app, host="0.0.0.0", port=8083, log_level="info" ,debug = True)
     except KeyboardInterrupt:
         pass

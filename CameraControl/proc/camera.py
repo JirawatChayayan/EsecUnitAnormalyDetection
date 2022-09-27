@@ -1,8 +1,6 @@
-from concurrent.futures import thread
-import time 
 import cv2 as cv
 import enum
-
+import time
 class CameraMode(enum.Enum):
     RTSP = 0
     Camera = 1
@@ -21,16 +19,18 @@ class Camera:
             if(self.camMode == CameraMode.RTSP):
                 self.cam = cv.VideoCapture(self.source,cv.CAP_FFMPEG)
             else:
-                self.cam = cv.VideoCapture(self.source)
+                self.cam = cv.VideoCapture(-1)
                 self.cam.set(cv.CAP_PROP_FRAME_WIDTH, width)
                 self.cam.set(cv.CAP_PROP_FRAME_HEIGHT, height)
+                # i = 0
+                # t = 0
                 # while(not self.camConnected):
-                #     # if(i > 20):
-                #     #     i= 0
-                #     #     t+=1
-                #     # if(t > 3):
-                #     #     raise Exception("Cannot Connect Camera.")
-                #     # try:
+                #     if(i > 20):
+                #         i= 0
+                #         t+=1
+                #     if(t > 3):
+                #         raise Exception("Cannot Connect Camera.")
+                #     try:
                 #         self.cam = cv.VideoCapture(i)
                 #         self.cam = i
                 #         self.cam.set(cv.CAP_PROP_FRAME_WIDTH, width)
@@ -59,7 +59,12 @@ class Camera:
     
     def grabImg(self):
         if(self.camConnected):
-            return self.cam.read()
+            try:
+                ret,frame = self.cam.read()
+                grayFrame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+                return ret,grayFrame
+            except:
+                return False,[]
         return False,[]
     
 

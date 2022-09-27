@@ -7,6 +7,7 @@ class ImgMode (str, Enum):
     Process = "Process"
     SetupTrain = "SetupTrain"
     SetupTest = "SetupTest"
+    Reject = "Reject"
 
 
 class ImgModel(BaseModel):
@@ -16,3 +17,8 @@ class ImgModel(BaseModel):
 class ImgFile(BaseModel):
     mode: ImgMode
     imgfilename: str
+
+class ImgCrop(BaseModel):
+    mode: ImgMode
+    imgfilename: str
+    bbox: tuple

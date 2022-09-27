@@ -1,4 +1,8 @@
 import netifaces as ni
+import socket   
+
+
+
 
 class GetIPAddress:
     def __init__(self):
@@ -14,7 +18,7 @@ class GetIPAddress:
             if_mac = if_ip = None
         if if_ip == ip:
             return if_mac.upper()
-    def getIP_MAC(self,device= 'wlp0s20f3'):
+    def getIP_MAC(self,device= 'enp1s0'):
         try:
             ip = ni.ifaddresses(device)[ni.AF_INET][0]['addr']
             return str(ip),self.mac_for_ip(str(ip),device)
@@ -22,17 +26,25 @@ class GetIPAddress:
             return '127.0.0.1',None
 
     def getIt(self):
-        wifi = self.getIP_MAC('wlp0s20f3')
-        eth = self.getIP_MAC('enp89s0')
+        wifi = self.getIP_MAC('enp0s31f6')
+        eth = self.getIP_MAC('enp1s0')
         if(eth[0] == '127.0.0.1' or eth[0] == '0.0.0.0'):
-            return wifi
-        return eth
+            if(wifi[0] == '127.0.0.1' or wifi[0] == '0.0.0.0'):
+                return self.get()
+            else:
+                return wifi
+        else:
+            return eth
+
+    def get(self):
+        eth0 = self.getIP_MAC('eth0')
+        return eth0
 
 
-# if __name__ == '__main__':
-#     a = GetIPAddress()
-#     #print(a.getIP_MAC('wlp0s20f3'))
-#     #print(a.getIP_MAC('enp89s0'))
-#     print(a.getIt())
-#     #ETH Port enp89s0
-#     #WIFI Port wlp0s20f3
+if __name__ == '__main__':
+    a = GetIPAddress()
+    #print(a.getIP_MAC('wlp0s20f3'))
+    #print(a.getIP_MAC('enp89s0'))
+    print(a.getIt())
+    #ETH Port enp89s0
+    #WIFI Port wlp0s20f3

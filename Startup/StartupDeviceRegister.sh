@@ -1,3 +1,3 @@
 #!/bin/bash
 
-/usr/bin/python3 /home/esec-ai/EsecUnitAnormalyDetection/RegistDevice/main.py
+/usr/bin/python3 ~/EsecUnitAnormalyDetection/RegistDevice/main.py >> ~/EsecUnitAnormalyDetection/Startup/logs/logRegistDevice.log 2>&1

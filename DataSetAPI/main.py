@@ -5,7 +5,7 @@ import uvicorn
 from starlette.middleware.cors import CORSMiddleware
 import sys
 import os
-from filecontrol.datamodel import ImgFile, ImgMode,ImgModel
+from filecontrol.datamodel import ImgFile, ImgMode,ImgModel, ImgCrop
 from filecontrol.file_control import FileProcess
 import threading 
 from fastapi.responses import RedirectResponse
@@ -13,6 +13,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 import time
+import cv2 as cv
 
 lock = threading.Lock()
 
@@ -84,6 +85,22 @@ def get_image_thumbnail(imgMode: ImgMode,size : int,response:Response):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return res
 
+@fileControl.post("/getimagecrop",status_code=200)
+def get_image_crop(imgMode: ImgCrop,response:Response):
+    res = None
+    lock.acquire()
+    try:
+        res = FileProcess().readcropImage(imgMode)
+    except Exception as ex:
+        print(ex)
+        res = None
+    lock.release()
+    if(res == None):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+        
+
 @fileControl.post("/getimage",status_code=200)
 def get_image_thumbnail(imgMode: ImgFile,response:Response):
     res = None
@@ -105,7 +122,19 @@ def get_image_thumbnail(imgMode: ImgFile,response:Response):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return res
 
-
+@fileControl.post("/moveimagerej", status_code=200)
+def get_image_reject(dataItem: ImgModel,response:Response):
+    res = False
+    lock.acquire()
+    try:
+        FileProcess().moveImgReject(dataItem)
+        res = True
+    except:
+        res = False
+    lock.release()
+    if(res == False):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
 
 @fileControl.delete("/images/",status_code=200)
 def get_image(dataItem: ImgModel,response:Response):

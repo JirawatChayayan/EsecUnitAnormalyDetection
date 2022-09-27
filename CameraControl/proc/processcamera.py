@@ -6,6 +6,10 @@ from proc.mqtt import MQTT
 from proc.serialConnect import TriggerCommunication,ModeRun
 from proc.camera import Camera,CameraMode
 from os.path import expanduser
+import numpy as np
+import queue
+from datetime import datetime
+import sys
 
 class ProcessCamera:
     def __init__(self):
@@ -16,11 +20,16 @@ class ProcessCamera:
         self.trig.callbacksProcess = self.callbackProc
         self.trig.callbacksTest = self.callbackTest
         self.trig.callbacksTrain = self.callbackTrain
+        self.trig.callbackRate = self.callbackRate
         self.threadRead = threading.Thread(target=self.processLoop)
         self.stopped = threading.Event()
         self.mqtt = MQTT()
         self.saveThisImageAPITest = False
         self.saveThisImageAPITrain = False
+        self.saveBackupImg = True
+        self.averagePixel = 75.0
+        self.errorImageCounter = 0
+        self.errorImageCounterLimit = 50
     
     def callbackProc(self):
         self.saveThisImageProc = True
@@ -37,6 +46,9 @@ class ProcessCamera:
         if(status):
             return img
 
+    def callbackRate(self,rate,stopmc,trigCount,ip):
+        self.mqtt.sendRate(rate,stopmc,trigCount,ip)
+
     def trigger(self):
         self.saveThisImage = True
 
@@ -45,43 +57,92 @@ class ProcessCamera:
             os.makedirs(path)
     
     def initialPath(self):
-        pathMain =  '{}/ImgScreenSave'.format('/home/esec-ai') #expanduser("~")
-        pathSetup = '{}/SetupMode'.format(pathMain)
-        pathProcess = '{}/ProcessMode'.format(pathMain)
-        #pathProcess = '/home/esec-ai/ramdisk/ProcessMode'
-        pathSetupTrain = '{}/Train'.format(pathSetup)
-        pathSetupTest = '{}/Test'.format(pathSetup)
-        self.createDir(pathMain)
-        self.createDir(pathSetup)
-        self.createDir(pathProcess)
-        self.createDir(pathSetupTrain)
-        self.createDir(pathSetupTest)
-        return pathMain,pathSetup,pathProcess,pathSetupTrain,pathSetupTest
+        self.pathMain =  '{}/ImgScreenSave'.format('/home/esec-ai') #expanduser("~")
+        self.pathSetup = '{}/SetupMode'.format(self.pathMain)
+        self.pathProcess = '{}/ProcessMode'.format(self.pathMain)
+        self.pathSetupTrain = '{}/Train'.format(self.pathSetup)
+        self.pathSetupTest = '{}/Test'.format(self.pathSetup)
+        self.pathSetupReject = '{}/Reject'.format(self.pathSetup)
+        now = datetime.now()
+        self.pathTempolaryTest = '{}/TempolaryTest/{}-{}-{}'.format(self.pathSetup,now.day,now.month,now.year)
+        self.createDir(self.pathMain)
+        self.createDir(self.pathSetup)
+        self.createDir(self.pathProcess)
+        self.createDir(self.pathSetupTrain)
+        self.createDir(self.pathSetupTest)
+        self.createDir(self.pathSetupReject)
+        self.createDir(self.pathTempolaryTest)
 
     def selectDir(self,mode = None):
-        pathMain,pathSetup,pathProcess,pathSetupTrain,pathSetupTest = self.initialPath()
+        self.initialPath()
         if(mode == ModeRun.Setup):
-            return pathSetup
+            return self.pathSetup
         elif(mode == ModeRun.Process):
-            return pathProcess
-        else:
-            return pathMain
+            return self.pathProcess
     
     def setupDir(self,Train = True):
-        pathMain,pathSetup,pathProcess,pathSetupTrain,pathSetupTest = self.initialPath()
+        self.initialPath()
         if(Train):
-            return pathSetupTrain
+            return self.pathSetupTrain
         else:
-            return pathSetupTest
+            return self.pathSetupTest
+
+    def findImageShifting(self,img):
+        ret , dst = cv.threshold (img,5,255,cv.THRESH_BINARY_INV) 
+        contours, _ = cv.findContours(dst, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+        self.initialPath()
+        for c in contours:
+            rect = cv.boundingRect(c)
+            if rect[2] < 10 or rect[3] < 10: continue
+
+            #reject save
+            print("Image Shift")
+            #self.saveBakImg(img)
+            return False
+        return True
+
+    def saveBakImg(self,img,fName = None):
+        try:
+            self.initialPath()
+            if(fName == None):
+                fName = (str(time.time()).replace('.','_'))+'.jpg'
+            fName = fName.replace('.png','.jpg')
+            if(self.saveBackupImg):
+                pathBak = self.pathTempolaryTest +'/'+fName
+                cv.imwrite(pathBak,img)
+        except:
+            pass
 
     def saveImg(self,img,mode):
-        path = self.selectDir(mode)+'/'+(str(time.time()).replace('.','_'))+'.png'
+        self.saveBakImg(img)
+        avg = np.average(img)
+        print(avg)
+        if(avg <= self.averagePixel):
+            # self.errorImageCounter += 1
+            # print(f"Image Error {self.errorImageCounter}")
+            return
+        if(self.findImageShifting(img)== False):
+            # print(f"Image Error {self.errorImageCounter}")
+            # self.errorImageCounter += 1
+            return
+        # self.errorImageCounter = 0
+        self.initialPath()
+        fName = (str(time.time()).replace('.','_'))+'.png'
+        path = self.selectDir(mode)+'/'+fName
         cv.imwrite(path,img)
         self.mqtt.sendGrabSignal(mode,path)
         print ('Save img at {}'.format(path))
 
     def saveImgSetup(self,img,Train = True):
-        path = self.setupDir(Train)+'/'+(str(time.time()).replace('.','_'))+'.png'
+        avg = np.average(img)
+        print(avg)
+        if(avg <= self.averagePixel):
+            return
+        self.initialPath()
+        if(self.findImageShifting(img)== False):
+            return
+        fName = (str(time.time()).replace('.','_'))+'.png'
+        path = self.setupDir(Train)+'/'+ fName
         cv.imwrite(path,img)
         self.mqtt.sendGrabSignal(ModeRun.Setup,path)
         print ('Save img at {}'.format(path))
@@ -89,7 +150,7 @@ class ProcessCamera:
     def connect(self):
         self.initialPath()
         self.mqtt.connectMqtt()
-        self.cam.connection(1920,1080)
+        self.cam.connection(640,480)
         if(self.cam.camConnected == False):
             self.disconnect()
             return False
@@ -102,7 +163,6 @@ class ProcessCamera:
             return False
         self.threadRead.start()
 
-    
     def disconnect(self):
         self.stopped.set()
         time.sleep(2)
@@ -116,32 +176,52 @@ class ProcessCamera:
         except:
             pass
 
-
     def processLoop(self):
         try:
+            # imgQueue = queue.Queue(60)
+            # for i in range(0,62):
+            #     img = self.capture()
+            #     imgQueue.put(img)
+            #     key = cv.waitKey(1)
             while not self.stopped.is_set():
+                # if(self.errorImageCounter > self.errorImageCounterLimit):
+                #     break
                 img = self.capture()
+                
+                avg = np.average(img)
+                print(avg)
+
+                #imgQueue.put(img)
                 key = cv.waitKey(1)
                 if(self.saveThisImageProc):
                     try:
                         self.saveImg(img,ModeRun.Process)
                         self.saveThisImageProc = False
                     except Exception as e:
+                        self.cam.disconnect()
+                        time.sleep(5)
                         print(e)
+                        self.cam.connection(640,480)
                         pass
                 if(self.saveThisImageAPITest):
                     try:
                         self.saveImgSetup(img,False)
                         self.saveThisImageAPITest = False
                     except Exception as e:
+                        self.cam.disconnect()
+                        time.sleep(5)
                         print(e)
+                        self.cam.connection(640,480)
                         pass
                 if(self.saveThisImageAPITrain):
                     try:
                         self.saveImgSetup(img,True)
                         self.saveThisImageAPITrain = False
                     except Exception as e:
+                        self.cam.disconnect()
+                        time.sleep(5)
                         print(e)
+                        self.cam.connection(640,480)
                         pass
                 if(key == ord('q')):
                     break
@@ -151,9 +231,11 @@ class ProcessCamera:
                     self.trig.sendSerial(True)
                 pass
             print('close')
+            # if(self.errorImageCounter > self.errorImageCounterLimit):
+            #     sys.exit()
+                # os._exit(0)
             cv.destroyAllWindows()
             self.disconnect()
-
         except KeyboardInterrupt:
             print('Keyboard Interrupt')
             cv.destroyAllWindows()

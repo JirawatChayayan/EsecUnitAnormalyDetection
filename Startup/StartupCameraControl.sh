@@ -1,3 +1,3 @@
 #!/bin/bash
 
-/usr/bin/python3 /home/esec-ai/EsecUnitAnormalyDetection/CameraControl/main.py
+env DISPLAY=:0.0 /usr/bin/python3 /home/esec-ai/EsecUnitAnormalyDetection/CameraControl/main.py

@@ -17,7 +17,8 @@ class MQTT:
         #publish
         pub_modeChange = '{}/mode'.format(self.machineID)
         pub_grabSignal = '{}/grab'.format(self.machineID)
-        return [pub_modeChange,pub_grabSignal]
+        pub_RateTrigger = '{}/Rate'.format(self.machineID)
+        return [pub_modeChange,pub_grabSignal,pub_RateTrigger]
     
     def connectMqtt(self):
         if(self.MQTTConnected):
@@ -79,4 +80,12 @@ class MQTT:
         except Exception as e:
             print(e)
             pass
-
+    def sendRate(self,rate,mcState,trigCount,ip):
+        param = {
+            "StopMC":mcState,
+            "Rate":rate,
+            "TriggerCount":trigCount,
+            "IP":ip
+        }
+        data = json.dumps(param)
+        self.publish(data,2)

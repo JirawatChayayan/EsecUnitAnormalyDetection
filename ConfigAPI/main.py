@@ -11,20 +11,11 @@ from pyexpat import model
 from pydantic import BaseModel
 from config import AIConfig
 import threading
+from model import ConfigModel, bbox,controlParameter,controlParameterInt,processParameter
+
 
 lock = threading.Lock()
 
-class ConfigModel(BaseModel):
-    machineId : str = 'ESEC2008-01P'
-    rejectThreshold:int = 120
-    stopWhenRejectCount:int = 1
-    changeModeWhenProcessTrigCount:int = 20 
-    maxProcessTimePerUnit:int = 1
-    useAI:bool = False
-    inferenceRate:int = 5
-    equipOpn:str = 'DA'
-    cimEquipID:str = 'TDAE096'
-    stopMachine = 'SECS/GEMS'
 
 app = FastAPI(
     title="Config Files",
@@ -43,7 +34,6 @@ app.add_middleware(
 async def redirect_typer():
     return RedirectResponse("http://0.0.0.0:8084/docs")
 
-
 con = APIRouter(
     prefix="/config",
     tags=["config"],
@@ -56,17 +46,7 @@ def update_config(dataItem: ConfigModel,response:Response):
     lock.acquire()
     try:
         conf = AIConfig()
-        conf.machineId = dataItem.machineId
-        conf.changeModeWhenProcessTrigCount = dataItem.changeModeWhenProcessTrigCount
-        conf.maxProcessTimePerUnit = dataItem.maxProcessTimePerUnit
-        conf.rejectThreshold = dataItem.rejectThreshold
-        conf.stopWhenRejectCount = dataItem.stopWhenRejectCount
-        conf.useAI = dataItem.useAI
-        conf.inferenceRate = dataItem.inferenceRate
-        conf.equipOpn = dataItem.equipOpn
-        conf.cimEquipID = dataItem.cimEquipID
-        conf.stopMachine = dataItem.stopMachine
-        conf.saveconfig()
+        conf.setnewConfig2(dataItem)
         res = True
     except:
         res = False
@@ -77,7 +57,7 @@ def update_config(dataItem: ConfigModel,response:Response):
     return res
 
 @con.post("/roi",status_code=200)
-def update_config(bbox: list,response:Response):
+def update_config(bbox: bbox,response:Response):
     res = False
     lock.acquire()
     try:
@@ -91,6 +71,119 @@ def update_config(bbox: list,response:Response):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return res
 
+@con.get("/mode",status_code=200)
+def getMode(response:Response):
+    return AIConfig().modeInspectDetail
+
+
+
+
+##################### AMS #####################
+
+@con.post("/set_rejectAMS_val",status_code=200)
+def update_AMS(val: int,response:Response):
+    res = False
+    lock.acquire()
+    try:
+        if(val is not None):
+            res = AIConfig().setRejectByAMS(val)
+    except:
+        res = False
+    finally:
+        lock.release()
+    if(res == False):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+@con.post("/set_rejectAMS_param",status_code=200)
+def update_AMS_param(param: controlParameterInt,response:Response):
+    res = False
+    lock.acquire()
+    try:
+        if(param is not None):
+            res = AIConfig().setRejectByAMSParam(param)
+    except:
+        res = False
+    finally:
+        lock.release()
+    if(res == False):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+@con.get("/rejectAMS_param",status_code=200)
+def get_ams_param():
+    return AIConfig().getRejectByAMSParam()
+
+################ pixel percent ###############
+@con.post("/set_reject_pixel_percent_val",status_code=200)
+def update_pixPercent(val: float,response:Response):
+    res = False
+    lock.acquire()
+    try:
+        if(val is not None):
+            res = AIConfig().setRejectByPixelPercent(val)
+    except:
+        res = False
+    finally:
+        lock.release()
+    if(res == False):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+@con.post("/set_reject_pixel_percent_param",status_code=200)
+def update_pixPercentParam(val: controlParameter,response:Response):
+    res = False
+    lock.acquire()
+    try:
+        if(val is not None):
+            res = AIConfig().setRejectByPixelPercentParam(val)
+    except:
+        res = False
+    finally:
+        lock.release()
+    if(res == False):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+@con.get("/reject_pixel_percent_param",status_code=200)
+def get_pixPrecent_param():
+    return AIConfig().getRejectByPixelPercentParam()
+
+
+################ area percent ###############
+@con.post("/set_reject_area_percent_val",status_code=200)
+def update_areaPercent(val: float,response:Response):
+    res = False
+    lock.acquire()
+    try:
+        if(val is not None):
+            res = AIConfig().setRejectByAreaPercent(val)
+    except:
+        res = False
+    finally:
+        lock.release()
+    if(res == False):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+@con.post("/set_reject_area_percent_param",status_code=200)
+def update_areaPercentParam(val: controlParameter,response:Response):
+    res = False
+    lock.acquire()
+    try:
+        if(val is not None):
+            res = AIConfig().setRejectByAreaPercentParam(val)
+    except:
+        res = False
+    finally:
+        lock.release()
+    if(res == False):
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return res
+
+@con.get("/reject_area_percent_param",status_code=200)
+def get_area_percent_param():
+    return AIConfig().getRejectByAreaPercentParam()
 
 
 @con.get("",status_code=200)
@@ -107,16 +200,11 @@ def get_config(response:Response):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return data
 
-
-
-
-
-
-
 app.include_router(con)
 
 @app.on_event("startup")
 def startup():
+    AIConfig().getCurrentConfig()
     pass
 
 @app.on_event("shutdown")

@@ -15,13 +15,13 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 
 #define testSigPin 10
-#define togglePin 6
-#define StopMcPin 53
-#define StopMcPinTrig 51
-#define trigRun 2
-#define trigTrain 3
-#define trigTest 4
-#define trigRelease 5
+#define togglePin 40
+#define StopMcPin 6
+#define StopMcPinTrig 7
+#define trigRun 27
+#define trigTrain 37
+#define trigTest 47
+#define trigRelease 53
 
 
 TriggerInput inputRun(trigRun,20);

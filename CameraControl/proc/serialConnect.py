@@ -19,16 +19,21 @@ class TriggerCommunication:
         self.port = '/dev/ttyACM0'
         if(sys.platform == 'win32'):
             self.port = 'COM3'
-        self.buadrate = 9600
+        self.buadrate = 115200
         self.serialHandle = None
         self.stopped = None
         self.threadRead = None
         self.callbacksProcess = None
         self.callbacksTrain = None
         self.callbacksTest = None
+
+        self.callbackRate = None
         self.modeRun = ModeRun.Setup
         self.lastJsonConfig = ""
         self.lastStateStopMC = False
+        self.rate = 600
+        ip,mac = GetIPAddress().getIt()
+        self.lastIP = ip
         pass
     def openSerialPort(self,isReconnect = False):
         self.serialHandle = None
@@ -38,13 +43,9 @@ class TriggerCommunication:
                 self.serialHandle = serial.Serial(self.port, self.buadrate)
                 if(self.serialHandle.is_open):
                     print('Opened Serial')
-                    time.sleep(2)
+                    time.sleep(5)
                     self.sendInformation()
-                    time.sleep(2)
-                    self.sendInformation()
-                    time.sleep(2)
-                    self.sendStopMachine(self.lastStateStopMC)
-                    time.sleep(2)
+                    time.sleep(0.5)
                     self.sendStopMachine(self.lastStateStopMC)
                     if((not isReconnect)):
                         self.stopped = threading.Event()
@@ -98,7 +99,7 @@ class TriggerCommunication:
     def readSerial(self):
         print('Serial Ready')
         t1 = time.time()
-        while not self.stopped.is_set():
+        while not self.stopped.is_set() and (self.serialHandle is not None):
             try:
                 tHancheck = (time.time() - t1)
                 if(tHancheck >5):
@@ -125,6 +126,10 @@ class TriggerCommunication:
                     if(re.search('HandCheck',cleanMsg) is not None):
                         cmd = json.loads(splitData[1])
                         self.lastStateStopMC = cmd['StopMC']
+                        self.rate = cmd['Rate']
+                        #print(self.rate)
+                        if(self.callbackRate is not None):
+                            self.callbackRate(cmd['Rate'],cmd['StopMC'],cmd['TriggerCount'],self.lastIP)
                         #print('Status Stop Machine : {}'.format(self.lastStateStopMC))
                         t1 = time.time()
 
@@ -146,61 +151,24 @@ class TriggerCommunication:
         del self.threadRead
 
     def sendInformation(self,machineID = 'ESEC-99P'):
-        ip,mac = GetIPAddress().getIt()
-        print('IP {} MAC {}'.format(ip,mac))
-        obj = {
-            'IP' : ip,
-            'MAC' : mac,
-            'MC_ID'  : machineID.strip()
-        }
-        strJson = json.dumps(obj)+"\n"
-        # if(self.lastJsonConfig  == strJson):
-        #     print('Same Data {}'.format(strJson))
-        #     return
-        # else:
-        #     self.lastJsonConfig = strJson
-        if(self.serialHandle is not None):
-            print('Write Data {}'.format(strJson))
-            self.serialHandle.write((strJson).encode())
-        pass
+        try:
+            ip,mac = GetIPAddress().getIt()
+            self.lastIP = ip
+            msgSend = ':{}:{}:{};\n'.format(ip,mac.replace(":", "-"),machineID)
+            if(self.serialHandle is not None):
+                #print(msgSend)
+                self.serialHandle.write(msgSend.encode())
+            pass
+        except:
+            pass
 
     def sendStopMachine(self,stop):
-        obj = {
-            "StopMC":stop
-        }
-        strJson = json.dumps(obj)+"\n"
+        msg = ':STOP;\n'
+        if(not stop):
+            msg = ':RELEASE;\n'
         if(self.serialHandle is not None):
-            #self.lastStateStopMC = stop
-            #print('Write Data {}'.format(strJson))
-            self.serialHandle.write((strJson).encode())
-
-    def setIO(self,ch):
-        obj = {
-            "SetOutput":ch
-        }
-        strJson = json.dumps(obj)+"\n"
-        if(self.serialHandle is not None):
-            #print('Write Data {}'.format(strJson))
-            self.serialHandle.write((strJson).encode())
-
-    def resetIO(self,ch):
-        obj = {
-            "ResetOutput":ch
-        }
-        strJson = json.dumps(obj)+"\n"
-        if(self.serialHandle is not None):
-            #print('Write Data {}'.format(strJson))
-            self.serialHandle.write((strJson).encode())
-
-    def AllIO(self,on = False):
-        obj = {
-            "AllOutput":on
-        }
-        strJson = json.dumps(obj)+"\n"
-        if(self.serialHandle is not None):
-            #print('Write Data {}'.format(strJson))
-            self.serialHandle.write((strJson).encode())
-
+            #print(msg)
+            self.serialHandle.write(msg.encode())
 
 def trig():
     print('{} Recived Signal'.format(datetime.utcnow()))
