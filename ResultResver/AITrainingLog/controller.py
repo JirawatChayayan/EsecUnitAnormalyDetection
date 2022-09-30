@@ -1,4 +1,5 @@
 import json
+from os import PRIO_PGRP
 from typing import List
 from fastapi import Depends, Response, status, APIRouter,UploadFile,File
 from db.table import AITrainingLog
@@ -51,74 +52,8 @@ def background_job():
 schedule.every(1800).seconds.do(background_job)
 stop_run_continuously = None
 
-
-
-
-@logAI.post("")
-async def postdata(response:Response,logAI: AITrainingLogModel, db:session = Depends(get_db)):
+def inputcachedata(db):
     global dataCache,lock
-    try:
-        print(logAI.startTrain)
-        print(logAI.finishTrain)
-        print(logAI.userTraining)
-        print(logAI.userLevel)
-        print(logAI.nImgTrain)
-        print(logAI.remark)
-        print(str(logAI.roiCropImg))
-        tb = AITrainingLog()
-        tb.TRAINER = str(logAI.userTraining.strip())
-        tb.TRAINER_LEVEL = str(logAI.userLevel.strip())
-        tb.TRAINING_IMAGE = int(logAI.nImgTrain)
-        tb.TRAINING_ROI = json.dumps(logAI.roiCropImg)
-        tb.TRAINING_START = logAI.startTrain
-        tb.TRAINING_FINISH = logAI.finishTrain
-        if(logAI.remark is not None):
-            tb.REMARK = str(logAI.remark)
-        db.add(tb)
-        db.commit() 
-        lock.acquire()
-        if(dataCache is None):
-            #initial cache
-            dataCache = []
-            data = db.query(AITrainingLog).order_by(desc(AITrainingLog.TRAINING_FINISH)).all()
-            if data is None:
-                dataCache = None
-            for a in data:
-                dataCache.append({
-                    "userTraining": a.TRAINER,
-                    "userLevel": a.TRAINER_LEVEL,
-                    "nImgTrain" : a.TRAINING_IMAGE,
-                    "roiCropImg": json.loads(a.TRAINING_ROI),
-                    "startTrain": a.TRAINING_START,
-                    "finishTrain": a.TRAINING_FINISH,
-                    "remark": a.REMARK
-                })
-                print(a)
-        else:
-            dataCache.insert(0,{
-                "userTraining": tb.TRAINER,
-                "userLevel": tb.TRAINER_LEVEL,
-                "nImgTrain" : tb.TRAINING_IMAGE,
-                "roiCropImg": json.loads(tb.TRAINING_ROI),
-                "startTrain": tb.TRAINING_START,
-                "finishTrain": tb.TRAINING_FINISH,
-                "remark": tb.REMARK
-            })
-        lock.release()
-    except Exception as ex:
-        response.status_code = 500
-        try:
-            lock.release()
-        except:
-            pass
-        return {'msg': ex}
-    return {'msg':'Created'}
-
-
-@logAI.get("")
-async def getdata(response:Response,db:session = Depends(get_db)):
-    global dataCache,lock
-
     lock.acquire()
     aaa = dataCache
     lock.release()
@@ -127,15 +62,15 @@ async def getdata(response:Response,db:session = Depends(get_db)):
     data = db.query(AITrainingLog).order_by(desc(AITrainingLog.TRAINING_FINISH)).all()
     res = []
     if data is None:
-        response.status_code = 404
-        return {'msg':'No data.'}
-
+        return None
     lock.acquire()
     dataCache = []
     for a in data:
         obj = {
                 "userTraining": a.TRAINER,
                 "userLevel": a.TRAINER_LEVEL,
+                "lotNo" : a.LOT_NO,
+                "lotNoCount" : a.LOT_NO_COUNT,
                 "nImgTrain" : a.TRAINING_IMAGE,
                 "roiCropImg": json.loads(a.TRAINING_ROI),
                 "startTrain": a.TRAINING_START,
@@ -146,6 +81,110 @@ async def getdata(response:Response,db:session = Depends(get_db)):
         dataCache.append(obj)
     lock.release()
     return res
+
+
+@logAI.post("")
+def postdata(response:Response,logAI: AITrainingLogModel, db:session = Depends(get_db)):
+    global dataCache,lock
+    try:
+        if(logAI == None):
+            response.status_code = 400
+            return "No input data"
+        lotNo = logAI.lotNo.strip()
+        if(lotNo == ""):
+            response.status_code = 400
+            return "No lot data"
+
+        print(logAI.startTrain)
+        print(logAI.finishTrain)
+        print(logAI.userTraining)
+        print(logAI.userLevel)
+        print(logAI.nImgTrain)
+        print(logAI.remark)
+        print(logAI.lotNo)
+        print(logAI.roiCropImg)
+
+        getOldData = db.query(AITrainingLog.LOT_NO,AITrainingLog.LOT_NO_COUNT,AITrainingLog.TRAINING_FINISH).filter(AITrainingLog.LOT_NO == lotNo).order_by(desc(AITrainingLog.LOT_NO_COUNT)).first()
+
+        print(getOldData)
+        lot_no_count = 1
+        if(getOldData == None):
+            lot_no_count = 1
+        else:
+            lot_no_count = getOldData['LOT_NO_COUNT']+1
+        
+        print(lot_no_count)
+
+        tb = AITrainingLog()
+        tb.TRAINER = str(logAI.userTraining.strip())
+        tb.LOT_NO = lotNo
+        tb.LOT_NO_COUNT = lot_no_count
+        tb.TRAINER_LEVEL = str(logAI.userLevel.strip())
+        tb.TRAINING_IMAGE = int(logAI.nImgTrain)
+        tb.TRAINING_ROI = json.dumps(
+            {
+                "R1":logAI.roiCropImg.R1,
+                "C1":logAI.roiCropImg.C1,
+                "R2":logAI.roiCropImg.R2,
+                "C2":logAI.roiCropImg.C2
+            }
+        )
+        tb.TRAINING_START = logAI.startTrain
+        tb.TRAINING_FINISH = logAI.finishTrain
+        if(logAI.remark is not None):
+            tb.REMARK = str(logAI.remark)
+        db.add(tb)
+        db.commit() 
+        
+        if(dataCache is None):
+            #initial cache
+            inputcachedata(db)
+        else:
+            lock.acquire()
+            dataCache.insert(0,{
+                "userTraining": tb.TRAINER,
+                "userLevel": tb.TRAINER_LEVEL,
+                "lotNo" : tb.LOT_NO,
+                "lotNoCount" : tb.LOT_NO_COUNT,
+                "nImgTrain" : tb.TRAINING_IMAGE,
+                "roiCropImg": json.loads(tb.TRAINING_ROI),
+                "startTrain": tb.TRAINING_START,
+                "finishTrain": tb.TRAINING_FINISH,
+                "remark": tb.REMARK
+            })
+            lock.release()
+    except Exception as ex:
+        print(ex)
+        response.status_code = 500
+        return {'msg': ex}
+    aaa = inputcachedata(db)[0]
+    return {
+        "lotNo": aaa['lotNo'],
+        "lotNoCount" : aaa['lotNoCount'],
+        "lotNoSum":"{}_{}".format(aaa['lotNo'],aaa['lotNoCount'])
+    }
+
+@logAI.get("")
+def getdata(response:Response,db:session = Depends(get_db)):
+    global dataCache,lock
+    aaa = inputcachedata(db)
+    if(aaa is not None):
+        return aaa
+    else:
+        response.status_code = 404
+        return {'msg':'No data.'}
+
+@logAI.get("/currentLot")
+def getcurrentLot(response:Response,db:session = Depends(get_db)):
+    global lock,dataCache
+    aaa = inputcachedata(db)[0]
+    return {
+        "lotNo": aaa['lotNo'],
+        "lotNoCount" : aaa['lotNoCount'],
+        "lotNoSum":"{}_{}".format(aaa['lotNo'],aaa['lotNoCount'])
+    }
+
+
 
 @logAI.on_event("startup")
 def startup():
@@ -159,4 +198,5 @@ def shutdown():
     global stop_run_continuously
     # Stop the background thread
     stop_run_continuously.set()
+    lock.release()
     pass

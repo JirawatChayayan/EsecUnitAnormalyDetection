@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, LargeBinary
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, LargeBinary,Float
 from sqlalchemy.dialects.mysql import LONGTEXT
 from pydantic.datetime_parse import datetime
 from db.db import engine
@@ -11,16 +11,49 @@ Base = declarative_base()
 class REJECT_RESULT(Base):
     __tablename__ = 'anormaly_result'
     ITEM = Column(Integer, primary_key=True, index=True)
+    
+    LOT_NO = Column(String(100))
+    LOT_NO_COUNT = Column(Integer)
+    FILENAME = Column(String(50))
+
     IMG_RAW = Column(LONGTEXT)
     IMG_HEATMAP = Column(LONGTEXT)
-    # IMG_TYPE = Column(String(50))
+
     SCORE_MIN = Column(Integer)
     SCORE_MAX = Column(Integer)
+
+    DEFECT_PERCENT = Column(Float)
+    SETUP_VALUE = Column(Float)
+    PROCESS_MODE = Column(Integer)
+
     MACHINE_NO = Column(String(50))
-    FILENAME = Column(String(50))
-    REJECT_THRESHOLD = Column(Integer)
     CREATEDATE = Column(TIMESTAMP(timezone=False), nullable=False, default=datetime.now())
     ACTIVEFLAG = Column(Boolean, default=True)
+
+class ALL_RESULT(Base):
+    __tablename__ = 'anormaly_all_result'
+    ITEM = Column(Integer, primary_key=True, index=True)
+    
+    LOT_NO = Column(String(100))
+    LOT_NO_COUNT = Column(Integer)
+    FILENAME = Column(String(50))
+
+    IMG_RAW_PATH = Column(String(300))
+    IMG_HEATMAP_PATH = Column(String(300))
+
+    SCORE_MIN = Column(Integer)
+    SCORE_MAX = Column(Integer)
+
+    DEFECT_PERCENT = Column(Float)
+    SETUP_VALUE = Column(Float)
+    PROCESS_MODE = Column(Integer)
+    IS_REJECT = Column(Boolean)
+
+    MACHINE_NO = Column(String(50))
+    CREATEDATE = Column(TIMESTAMP(timezone=False), nullable=False, default=datetime.now())
+    ACTIVEFLAG = Column(Boolean, default=True)
+
+
 
 class MC_LOG(Base):
     __tablename__ = 'stop_release_mc_log'
@@ -33,6 +66,8 @@ class MC_LOG(Base):
 class AITrainingLog(Base):
     __tablename__ = 'ai_training_log'
     ITEM = Column(Integer, primary_key=True, index=True)
+    LOT_NO = Column(String(50))
+    LOT_NO_COUNT = Column(Integer)
     TRAINER = Column(String(50))
     TRAINER_LEVEL = Column(String(50))
     TRAINING_IMAGE = Column(Integer)

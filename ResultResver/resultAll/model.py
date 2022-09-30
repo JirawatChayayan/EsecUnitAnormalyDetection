@@ -2,18 +2,19 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 
-class ImageResultModel(BaseModel):
+class ImageResultAllModel(BaseModel):
     lotNo:str
     lotNoCount:int
-    imgRaw: str
-    imgHeatMap: str
+    imgRawPath: str
+    imgHeatMapPath: str
     scoreMin: int
     scoreMax: int
 
     defectPercent:float
     setupValue: float 
     processMode: int
-    
+    isReject:bool
+
     machineNo: str
     imgFileName: str
     class Config:
@@ -21,13 +22,14 @@ class ImageResultModel(BaseModel):
             "example": {
                 "lotNo":"PAPPK2199.1 (Lot No)",
                 "lotNoCount":1,
-                "imgRaw":"data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAB34AAAQeCAYA.....",
-                "imgHeatMap":"data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAB34AAAQeCAYA.....",
+                "imgRawPath":"path/to/file",
+                "imgHeatMapPath":"path/to/file",
                 "scoreMin": 0,
                 "scoreMax": 255,
                 "defectPercent": 5.00,
                 "setupValue": 150.00,
                 "processMode":1,
+                "isReject":True,
                 "machineNo": "ESEC-99P",
                 "imgFileName": "file_name_with out extention (.png)"
             }
@@ -45,8 +47,3 @@ class GetImageModel(BaseModel):
                 "createDate": datetime.now(),
             }
         }
-
-
-class ImageResultModels(BaseModel):
-    dataItem: List[ImageResultModel]
-   

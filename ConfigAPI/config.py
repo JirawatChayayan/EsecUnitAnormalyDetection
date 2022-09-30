@@ -22,6 +22,11 @@ class AIConfig():
         }
 
         self.processParameter = {
+            "RejectByAMS" : {
+                "Val" : 150,
+                "Min" : 100,
+                "Max" : 180
+            },
             "RejectByPixelPercent" : {
                 "Val" : 3.00,
                 "Min" : 1.00,
@@ -31,11 +36,6 @@ class AIConfig():
                 "Val" : 3.00,
                 "Min" : 1.00,
                 "Max" : 5.00
-            },
-            "RejectByAMS" : {
-                "Val" : 150,
-                "Min" : 100,
-                "Max" : 180
             },
         }
 
@@ -261,6 +261,11 @@ class AIConfig():
                 "C2" : C2,
             }
             self.processParameter = {
+                "RejectByAMS" : {
+                    "Val" : rejAMSVal,
+                    "Min" : rejAMSMin,
+                    "Max" : rejAMSMax
+                },
                 "RejectByPixelPercent" : {
                     "Val" : rejPixVal,
                     "Min" : rejPixMin,
@@ -270,11 +275,6 @@ class AIConfig():
                     "Val" : rejAreaVal,
                     "Min" : rejAreaMin,
                     "Max" : rejAreaMax
-                },
-                "RejectByAMS" : {
-                    "Val" : rejAMSVal,
-                    "Min" : rejAMSMin,
-                    "Max" : rejAMSMax
                 },
             }
             self.saveconfig()
