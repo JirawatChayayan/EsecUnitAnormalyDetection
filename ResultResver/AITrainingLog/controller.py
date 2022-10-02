@@ -64,21 +64,26 @@ def inputcachedata(db):
     if data is None:
         return None
     lock.acquire()
-    dataCache = []
-    for a in data:
-        obj = {
-                "userTraining": a.TRAINER,
-                "userLevel": a.TRAINER_LEVEL,
-                "lotNo" : a.LOT_NO,
-                "lotNoCount" : a.LOT_NO_COUNT,
-                "nImgTrain" : a.TRAINING_IMAGE,
-                "roiCropImg": json.loads(a.TRAINING_ROI),
-                "startTrain": a.TRAINING_START,
-                "finishTrain": a.TRAINING_FINISH,
-                "remark": a.REMARK
-            }
-        res.append(obj)
-        dataCache.append(obj)
+    try:
+        dataCache = []
+        for a in data:
+            obj = {
+                    "userTraining": a.TRAINER,
+                    "userLevel": a.TRAINER_LEVEL,
+                    "lotNo" : a.LOT_NO,
+                    "lotNoCount" : a.LOT_NO_COUNT,
+                    "nImgTrain" : a.TRAINING_IMAGE,
+                    "roiCropImg": json.loads(a.TRAINING_ROI),
+                    "startTrain": a.TRAINING_START,
+                    "finishTrain": a.TRAINING_FINISH,
+                    "remark": a.REMARK
+                }
+            res.append(obj)
+            dataCache.append(obj)
+    except:
+        res = None
+        dataCache = None
+        pass
     lock.release()
     return res
 

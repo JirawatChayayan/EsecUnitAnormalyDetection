@@ -1,4 +1,5 @@
 
+from tkinter.tix import INTEGER
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, LargeBinary,Float
 from sqlalchemy.dialects.mysql import LONGTEXT
 from pydantic.datetime_parse import datetime
@@ -53,6 +54,28 @@ class ALL_RESULT(Base):
     CREATEDATE = Column(TIMESTAMP(timezone=False), nullable=False, default=datetime.now())
     ACTIVEFLAG = Column(Boolean, default=True)
 
+class TEST_RESULT(Base):
+    __tablename__ = 'anormaly_test_result'
+    ITEM = Column(Integer, primary_key=True, index=True)
+    
+    LOT_NO = Column(String(100))
+    LOT_NO_COUNT = Column(Integer)
+    FILENAME = Column(String(50))
+
+    IMG_RAW_PATH = Column(String(300))
+    IMG_HEATMAP_PATH = Column(String(300))
+
+    SCORE_MIN = Column(Integer)
+    SCORE_MAX = Column(Integer)
+
+    DEFECT_PERCENT = Column(Float)
+    SETUP_VALUE = Column(Float)
+    PROCESS_MODE = Column(Integer)
+    IS_REJECT = Column(Boolean)
+
+    MACHINE_NO = Column(String(50))
+    CREATEDATE = Column(TIMESTAMP(timezone=False), nullable=False, default=datetime.now())
+    ACTIVEFLAG = Column(Boolean, default=True)
 
 
 class MC_LOG(Base):
@@ -76,7 +99,5 @@ class AITrainingLog(Base):
     TRAINING_FINISH = Column(TIMESTAMP(timezone=False), nullable=False, default=datetime.now())
     REMARK = Column(String(5000))
     ACTIVEFLAG = Column(Boolean, default=True)
-
- 
 
 Base.metadata.create_all(engine)

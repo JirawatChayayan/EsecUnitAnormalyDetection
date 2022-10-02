@@ -18,6 +18,16 @@ class InferModel(BaseModel):
     controlValue : float = None
     showAllImage : bool = True
 
+class InferModelMonitor(BaseModel):
+    imgList:list =None
+    bbox = bbox()
+    anomalyThreshold : int = None
+    procMode : int = None 
+    controlValueProc1 : float = None
+    controlValueProc2 : float = None
+    controlValueProc3 : float = None
+    showAllImage : bool = True
+
 class MatData(BaseModel):
     img: str
     bbox = bbox()

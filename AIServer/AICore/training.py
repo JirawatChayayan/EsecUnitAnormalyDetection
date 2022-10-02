@@ -25,7 +25,7 @@ from pathlib import Path
 
 from AICore.computerVision import DefectProcess
 
-from model import bbox,InferModel,TrainingModel
+from model import bbox,InferModel,TrainingModel,InferModelMonitor
 
 
 class Training():
@@ -336,6 +336,150 @@ class Training():
                     res["resultImgInput"] = None
                     res["resultImgHeat"] = None
             result.append(res)
+            
+
+        del test_dataset
+        del image_test
+        return result
+
+    def predict_mon(self,param:InferModelMonitor):
+        if(param is None):
+            msg = "Argument param is None !!!"
+            self.statusPublish(msg,"ERROR")
+            raise Exception(msg)
+        
+        if(self.model is None or self.onTraining):
+            msg = "not have Model in system !!!"
+            self.statusPublish(msg,"ERROR")
+            raise Exception(msg)
+
+        if(param.imgList == None):
+            msg = "Not found image !!!"
+            self.statusPublish(msg,"ERROR")
+            raise Exception(msg)
+
+        if(len(param.imgList) == 0):
+            msg = "Not found image !!!"
+            self.statusPublish(msg,"ERROR")
+            raise Exception(msg)
+
+
+        self.statusPublish("Initialize...","INFO")
+        i_count = 0
+
+       
+        image_test,imgs_path = self.convertImage(param.imgList,param.bbox)
+        
+        result = []
+        test_dataset = StreamingDataset()
+        for test_image in image_test:
+            test_dataset.add_pil_image(
+                Image.open(io.BytesIO(test_image))
+            )
+        n = 0
+        for img in test_dataset:
+            sample, *_ = img
+            img_lvl_anom,pxl_lvl_anom = self.model.predict(sample.unsqueeze(0))
+            score = pxl_lvl_anom.min(),pxl_lvl_anom.max()
+            scoreMin = int('{:.0f}'.format(score[0]))
+            scoreMax = int('{:.0f}'.format(score[1]))
+            imgInput,imgHeat,imgTensor,picVal =  self.show_pred(sample, pxl_lvl_anom)
+
+            if(scoreMin>255):
+                scoreMin = 255
+            if(scoreMax>255):
+                scoreMax = 255
+            
+
+
+            #Procmode 1 result #AnormalyMaxScore
+            IsReject1 = False
+            imgRes1 = ""
+            ams = int(param.anomalyThreshold)
+            imgRes1 = imgHeat
+            if(scoreMax > ams):
+                IsReject1 = True
+            else:
+                IsReject1 = False
+            pass
+
+            res = {
+                "imgfilename": os.path.basename(imgs_path[n]),
+                "procMode" : 1,
+                "scoreMin" : scoreMin,
+                "scoreMax" : scoreMax,
+                "defectPercent" : 0,
+                "isReject" : IsReject1
+            }
+
+            self.resultPublish("Inference",0,res)
+            if(param.showAllImage):
+                res["resultImgInput"] = imgInput
+                res["resultImgHeat"] = imgRes1
+            else:
+                if(IsReject1):
+                    res["resultImgInput"] = imgInput
+                    res["resultImgHeat"] = imgRes1
+                else:
+                    res["resultImgInput"] = None
+                    res["resultImgHeat"] = None
+            result.append(res)
+
+
+            #proc Mode 2 result #AnormalyRejectPosition
+            positionPercen = float(param.controlValueProc2)
+            imgRes2,IsReject2,defectPercent2 = (DefectProcess()).findPixel(imgTensor,imgHeat,param.anomalyThreshold,positionPercen)
+
+            res2 = {
+                "imgfilename": os.path.basename(imgs_path[n]),
+                "procMode" : 2,
+                "scoreMin" : scoreMin,
+                "scoreMax" : scoreMax,
+                "defectPercent" : defectPercent2,
+                "isReject" : IsReject2
+            }
+
+            self.resultPublish("Inference",0,res2)
+            if(param.showAllImage):
+                res2["resultImgInput"] = imgInput
+                res2["resultImgHeat"] = imgRes2
+            else:
+                if(IsReject1):
+                    res2["resultImgInput"] = imgInput
+                    res2["resultImgHeat"] = imgRes2
+                else:
+                    res2["resultImgInput"] = None
+                    res2["resultImgHeat"] = None
+            result.append(res2)
+
+
+            #proc Mode 3 result #AnormalyRejectArea
+            areaPercen = float(param.controlValueProc3)
+            imgRes3,IsReject3,defectPercent3 = (DefectProcess()).findDefect(imgTensor,imgHeat,param.anomalyThreshold,areaPercen)
+
+            res3 = {
+                "imgfilename": os.path.basename(imgs_path[n]),
+                "procMode" : 3,
+                "scoreMin" : scoreMin,
+                "scoreMax" : scoreMax,
+                "defectPercent" : defectPercent3,
+                "isReject" : IsReject3
+            }
+
+            self.resultPublish("Inference",0,res3)
+            if(param.showAllImage):
+                res3["resultImgInput"] = imgInput
+                res3["resultImgHeat"] = imgRes3
+            else:
+                if(IsReject1):
+                    res3["resultImgInput"] = imgInput
+                    res3["resultImgHeat"] = imgRes3
+                else:
+                    res3["resultImgInput"] = None
+                    res3["resultImgHeat"] = None
+            result.append(res3)
+            n +=1
+            
             
 
         del test_dataset

@@ -1,4 +1,3 @@
-from asyncore import write
 import csv
 import shutil
 import glob
@@ -187,13 +186,13 @@ class TestFileProcess:
         self.createDir(self.pathCSVTest)
         self.createDir(self.pathImgTest)
 
-    def imgHeatPath(self,lotno):
-        a = '{}/{}/ImgHeat'.format(self.pathImgTest,lotno)
+    def imgHeatPath(self,lotno,procMode):
+        a = '{}/{}/{}/ImgHeat'.format(self.pathImgTest,lotno,procMode)
         self.createDir(a)
         return a
     
-    def imgInputPath(self,lotno):
-        a = '{}/{}/ImgInput'.format(self.pathImgTest,lotno)
+    def imgInputPath(self,lotno,procMode):
+        a = '{}/{}/{}/ImgInput'.format(self.pathImgTest,lotno,procMode)
         self.createDir(a)
         return a
     
@@ -234,6 +233,19 @@ class TestFileProcess:
         imgResize = cv.resize(img,(200,200))
         return imgResize
     
+
+    def savetoDB(self,res):
+        try:
+            url = "http://127.0.0.1:8085/test_result"
+            payload = json.dumps(res)
+            headers = { 
+                'Content-Type': 'application/json'
+            }
+            response = requests.request("POST", url, headers=headers, data=payload)
+        except:
+            pass
+
+
     def writeData(self,lotData,controlValue,machineNo,resultDict = []):
         #['lotNo'],lotSum['lotNoCount'],lotSum['lotNoSum']
         lotsum = lotData['lotNoSum'].strip()
@@ -255,22 +267,47 @@ class TestFileProcess:
             writer.writerow(row)
             row = [f"Append On {date_time_str}","","","","","","","","","","",""]
             writer.writerow(row)
-
+        
+        resultforDB = []
         for res in resultDict:
             try:
                 strFname = res['imgfilename'].split('.')[0]+".jpg"
-                imgRawPath = os.path.join(self.imgInputPath(lotsum),strFname)
-                imgHeatPath = os.path.join(self.imgHeatPath(lotsum),strFname)
+                imgRawPath = os.path.join(self.imgInputPath(lotsum,res['procMode']),strFname)
+                imgHeatPath = os.path.join(self.imgHeatPath(lotsum,res['procMode']),strFname)
                 imgRaw = self.b64toImg(res['resultImgInput'])
                 imgHeat = self.b64toImg(res['resultImgHeat'])
                 cv.imwrite(imgRawPath,imgRaw)
                 cv.imwrite(imgHeatPath,imgHeat)
-                row = [res['imgfilename'],res['scoreMin'],res['scoreMax'],res['procMode'],res['defectPercent'],str(res['isReject']),lotData['lotNo'],lotData['lotNoCount'],controlValue,imgRawPath,imgHeatPath,machineNo]
+
+                conValue = controlValue[res['procMode']-1]
+
+                row = [res['imgfilename'],res['scoreMin'],res['scoreMax'],res['procMode'],res['defectPercent'],str(res['isReject']),lotData['lotNo'],lotData['lotNoCount'],conValue,imgRawPath,imgHeatPath,machineNo]
                 writer.writerow(row)
+
+
+                objdb = {
+                    "lotNo":lotData['lotNo'].strip(),
+                    "lotNoCount":lotData['lotNoCount'],
+                    "imgRawPath":imgRawPath,
+                    "imgHeatMapPath":imgHeatPath,
+                    "scoreMin": res['scoreMin'],
+                    "scoreMax": res['scoreMax'],
+
+                    "defectPercent": res['defectPercent'],
+                    "setupValue" : conValue,
+                    "processMode" : res['procMode'],
+                    "isReject": res['isReject'],
+
+                    "machineNo": machineNo,
+                    "imgFileName": res['imgfilename']
+                }
+                resultforDB.append(objdb)
+
             except:
                 pass
 
         fHandle.close()
+        self.savetoDB(resultforDB)
         pass
 
 class RunFileProcess:
@@ -294,13 +331,13 @@ class RunFileProcess:
         self.createDir(self.pathCSVTest)
         self.createDir(self.pathImgTest)
 
-    def imgHeatPath(self,lotno):
-        a = '{}/{}/ImgHeat'.format(self.pathImgTest,lotno)
+    def imgHeatPath(self,lotno,procMode):
+        a = '{}/{}/{}/ImgHeat'.format(self.pathImgTest,lotno,procMode)
         self.createDir(a)
         return a
     
-    def imgInputPath(self,lotno):
-        a = '{}/{}/ImgInput'.format(self.pathImgTest,lotno)
+    def imgInputPath(self,lotno,procMode):
+        a = '{}/{}/{}/ImgInput'.format(self.pathImgTest,lotno,procMode)
         self.createDir(a)
         return a
     
@@ -354,7 +391,7 @@ class RunFileProcess:
             pass
 
 
-    def writeData(self,lotData,controlValue,machineNo,resultDict = []):
+    def writeData(self,lotData,controlValue,machineNo,resultDict,actualProcMode):
         #['lotNo'],lotSum['lotNoCount'],lotSum['lotNoSum']
         lotsum = lotData['lotNoSum'].strip()
         csvPath = os.path.join(self.pathCSVTest,f"{lotsum.strip()}.csv")
@@ -375,13 +412,16 @@ class RunFileProcess:
         for res in resultDict:
             try:
                 strFname = res['imgfilename'].split('.')[0]+".jpg"
-                imgRawPath = os.path.join(self.imgInputPath(lotsum),strFname)
-                imgHeatPath = os.path.join(self.imgHeatPath(lotsum),strFname)
+                imgRawPath = os.path.join(self.imgInputPath(lotsum,res['procMode']),strFname)
+                imgHeatPath = os.path.join(self.imgHeatPath(lotsum,res['procMode']),strFname)
                 imgRaw = self.b64toImg(res['resultImgInput'])
                 imgHeat = self.b64toImg(res['resultImgHeat'])
+
+                conValue = controlValue[res['procMode']-1]
+                
                 cv.imwrite(imgRawPath,imgRaw)
                 cv.imwrite(imgHeatPath,imgHeat)
-                row = [res['imgfilename'],res['scoreMin'],res['scoreMax'],res['procMode'],res['defectPercent'],str(res['isReject']),lotData['lotNo'].strip(),lotData['lotNoCount'],controlValue,imgRawPath,imgHeatPath,machineNo]
+                row = [res['imgfilename'],res['scoreMin'],res['scoreMax'],res['procMode'],res['defectPercent'],str(res['isReject']),lotData['lotNo'].strip(),lotData['lotNoCount'],conValue,imgRawPath,imgHeatPath,machineNo]
                 writer.writerow(row)
 
                 objdb = {
@@ -393,7 +433,7 @@ class RunFileProcess:
                     "scoreMax": res['scoreMax'],
 
                     "defectPercent": res['defectPercent'],
-                    "setupValue" : controlValue,
+                    "setupValue" : conValue,
                     "processMode" : res['procMode'],
                     "isReject": res['isReject'],
 
@@ -402,28 +442,28 @@ class RunFileProcess:
                 }
                 resultforDB.append(objdb)
 
-                
-                imgHeatb64 = ""
-                imgRawb64 = ""
-                if(res['isReject']):
-                    imgHeatb64 = res['resultImgHeat']
-                    imgRawb64 = res['resultImgInput']
+                if(res['procMode'] == actualProcMode):
+                    imgHeatb64 = ""
+                    imgRawb64 = ""
+                    if(res['isReject']):
+                        imgHeatb64 = res['resultImgHeat']
+                        imgRawb64 = res['resultImgInput']
 
 
-                objRetResult = {
-                    "lotNo":lotData['lotNo'].strip(),
-                    "lotNoCount":lotData['lotNoCount'],
-                    "imgRaw": imgRawb64,
-                    "imgHeatMap": imgHeatb64,
-                    "scoreMin": res['scoreMin'],
-                    "scoreMax": res['scoreMax'],
-                    "defectPercent": res['defectPercent'],
-                    "setupValue" : controlValue,
-                    "processMode" : res['procMode'],
-                    "machineNo": machineNo,
-                    "imgFileName": res['imgfilename']
-                }
-                resultforReturn.append(objRetResult)
+                    objRetResult = {
+                        "lotNo":lotData['lotNo'].strip(),
+                        "lotNoCount":lotData['lotNoCount'],
+                        "imgRaw": imgRawb64,
+                        "imgHeatMap": imgHeatb64,
+                        "scoreMin": res['scoreMin'],
+                        "scoreMax": res['scoreMax'],
+                        "defectPercent": res['defectPercent'],
+                        "setupValue" : conValue,
+                        "processMode" : res['procMode'],
+                        "machineNo": machineNo,
+                        "imgFileName": res['imgfilename']
+                    }
+                    resultforReturn.append(objRetResult)
             except:
                 pass
         fHandle.close()

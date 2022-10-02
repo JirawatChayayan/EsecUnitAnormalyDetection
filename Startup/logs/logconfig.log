@@ -1,0 +1,89 @@
+INFO:     Started server process [1153]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8084 (Press CTRL+C to quit)
+INFO:     127.0.0.1:46540 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37978 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38264 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42344 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34320 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37458 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49682 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51844 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50402 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59200 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59200 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38714 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36976 - "GET /config/mode HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33766 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47578 - "POST /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55240 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46192 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46192 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57584 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47558 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40686 - "GET /config HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1153]
+INFO:     Started server process [1099]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8084 (Press CTRL+C to quit)
+INFO:     127.0.0.1:45496 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36696 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52380 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52380 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59292 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46716 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58878 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60074 - "POST /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60122 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42060 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43476 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49602 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49498 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51024 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59878 - "GET /config HTTP/1.1" 200 OK
+INFO:     Started server process [1197]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8084 (Press CTRL+C to quit)
+INFO:     127.0.0.1:52770 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51680 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54076 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41904 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39264 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39656 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59532 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59532 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55088 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55088 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57632 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44354 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43302 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54414 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52824 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43062 - "GET /config HTTP/1.1" 200 OK
+INFO:     Started server process [1152]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8084 (Press CTRL+C to quit)
+INFO:     127.0.0.1:39266 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48896 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51764 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35830 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49464 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58580 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60482 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46664 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:32904 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53028 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41506 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44244 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54584 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33554 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33554 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34330 - "GET /config HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37538 - "GET /config HTTP/1.1" 200 OK

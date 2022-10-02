@@ -1,0 +1,30 @@
+INFO:     Started server process [1684]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8085 (Press CTRL+C to quit)
+INFO:     127.0.0.1:57208 - "GET /docs HTTP/1.1" 200 OK
+INFO:     Started server process [1906]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8085 (Press CTRL+C to quit)
+Unable to init server: Could not connect: Connection refused
+Unable to init server: Could not connect: Connection refused
+
+(main.py:1963): Gdk-CRITICAL **: 07:52:35.287: gdk_cursor_new_for_display: assertion 'GDK_IS_DISPLAY (display)' failed
+INFO:     Started server process [1963]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8085 (Press CTRL+C to quit)
+Unable to init server: Could not connect: Connection refused
+Unable to init server: Could not connect: Connection refused
+
+(main.py:1955): Gdk-CRITICAL **: 13:42:24.209: gdk_cursor_new_for_display: assertion 'GDK_IS_DISPLAY (display)' failed
+INFO:     Started server process [1955]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8085 (Press CTRL+C to quit)
+INFO:     127.0.0.1:54686 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54686 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49944 - "GET /all_result/lotlist HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49944 - "GET /all_result/lotlist HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57498 - "POST /all_result/lotAnomalyInfoGraph HTTP/1.1" 200 OK

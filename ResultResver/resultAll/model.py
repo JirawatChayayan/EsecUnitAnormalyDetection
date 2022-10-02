@@ -47,3 +47,14 @@ class GetImageModel(BaseModel):
                 "createDate": datetime.now(),
             }
         }
+
+class GetAnomalyInfo(BaseModel):
+    lotNo :str
+    lotNoCount :int
+    class Config:
+        schema_extra = {
+            "example": {
+                "lotNo": "your lot no",
+                "lotNoCount":0,
+            }
+        }

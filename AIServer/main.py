@@ -22,7 +22,7 @@ from AICore.fileCopy import RunFileProcess, TestFileProcess,TrainingFileProcess
 import time
 import requests
 import os
-from model import TrainingModel, bbox,InferModel,MatData
+from model import TrainingModel, bbox,InferModel,MatData,InferModelMonitor
 
 training = Training()
 #time.sleep(45)
@@ -45,7 +45,7 @@ def trainingProc(imgs,bbox:bbox = None):
         inProcess = False
     return result
 
-def inferenceProc(dataItem:TrainingModel):
+def inferenceProc(dataItem:InferModel):
     global inProcess,training,model
     if(inProcess):     
         return None
@@ -56,6 +56,27 @@ def inferenceProc(dataItem:TrainingModel):
         else:
             inProcess = True
             result = training.predict(dataItem)
+            inProcess = False
+            return result
+    except Exception as a:
+        print(a)
+        pass
+    finally:
+        inProcess = False
+    return None
+
+
+def inferenceProc_Mon(dataItem:InferModelMonitor):
+    global inProcess,training,model
+    if(inProcess):     
+        return None
+    try:
+        if(training.model == None):
+            model = False
+            return None
+        else:
+            inProcess = True
+            result = training.predict_mon(dataItem)
             inProcess = False
             return result
     except Exception as a:
@@ -139,7 +160,7 @@ def selfTesting():
             return None,None,None
         if(len(imgs)==0):
             return None,None,None
-        a = InferModel()
+        a = InferModelMonitor()
         
         a.imgList = imgs
         a.bbox = bbox()
@@ -149,14 +170,11 @@ def selfTesting():
         a.bbox.C2 = bboxCrop['C2']
         a.anomalyThreshold = processParameter['RejectByAMS']['Val']
         a.procMode = processMode
-        if(processMode == 1):
-            a.controlValue = processParameter['RejectByAMS']['Val']
-        elif(processMode == 2):
-            a.controlValue = processParameter['RejectByPixelPercent']['Val']
-        else:
-            a.controlValue = processParameter['RejectByAreaPercent']['Val']
+        a.controlValueProc1 = processParameter['RejectByAMS']['Val']
+        a.controlValueProc2 = processParameter['RejectByPixelPercent']['Val']
+        a.controlValueProc3 = processParameter['RejectByAreaPercent']['Val']
         a.showAllImage = True
-        return inferenceProc(a),a.controlValue,config['machineId']
+        return inferenceProc_Mon(a),config['machineId'],[a.controlValueProc1,a.controlValueProc2,a.controlValueProc3]
     except Exception as a:
         print(a)
         return None,None,None
@@ -275,7 +293,7 @@ def testProcess(response:Response):
     trainingData.processTrainImage(lot['lotNoSum'])
 
     testData = TestFileProcess()
-    aiRes,controlVal,machineId = selfTesting()
+    aiRes,machineId,controlVal = selfTesting()
     if(aiRes is None):
         response.status_code = 500
         return "Error to run AI"
@@ -298,30 +316,33 @@ def infer(item :InferModel,response:Response):
     if(lot is None):
         response.status_code = 500
         return "can not connect to result data server !!!"
+
+
+    items = InferModelMonitor()    
+    items.imgList = item.imgList
     config = getConfig()
     bboxCrop = config['bboxCrop']
     processMode = config['modeInspect']
     processParameter = config['processParameter']
-    item.bbox = bbox()
-    item.bbox.R1 = bboxCrop['R1']
-    item.bbox.C1 = bboxCrop['C1']
-    item.bbox.R2 = bboxCrop['R2']
-    item.bbox.C2 = bboxCrop['C2']
+    items.bbox = bbox()
+    items.bbox.R1 = bboxCrop['R1']
+    items.bbox.C1 = bboxCrop['C1']
+    items.bbox.R2 = bboxCrop['R2']
+    items.bbox.C2 = bboxCrop['C2']
 
-    item.anomalyThreshold = processParameter['RejectByAMS']['Val']
-    item.procMode = processMode
-    if(processMode == 1):
-        item.controlValue = processParameter['RejectByAMS']['Val']
-    elif(processMode == 2):
-        item.controlValue = processParameter['RejectByPixelPercent']['Val']
-    else:
-        item.controlValue = processParameter['RejectByAreaPercent']['Val']
+    items.anomalyThreshold = processParameter['RejectByAMS']['Val']
+    items.procMode = processMode
+    items.controlValueProc1 = processParameter['RejectByAMS']['Val']
+    items.controlValueProc2 = processParameter['RejectByPixelPercent']['Val']
+    items.controlValueProc3 = processParameter['RejectByAreaPercent']['Val']
     mcId = config['machineId']
-    item.showAllImage = True
-    result = inferenceProc(item)
+    items.showAllImage = True
+    actualProcMode = processMode
+    result = inferenceProc_Mon(items)
     if(result is not None):
         response.status_code = 200
-        return RunFileProcess().writeData(lot,item.controlValue,mcId,result)
+        controlValue = [items.controlValueProc1,items.controlValueProc2,items.controlValueProc3]
+        return RunFileProcess().writeData(lot,controlValue,mcId,result,actualProcMode)
     else:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return result

@@ -1,7 +1,7 @@
 from typing import List
 from urllib import response
 from fastapi import Depends, Response, status, APIRouter,UploadFile,File
-from db.table import ALL_RESULT
+from db.table import TEST_RESULT
 from db.db import session, get_db
 from resultAll.model import ImageResultAllModel, GetImageModel,GetAnomalyInfo
 from sqlalchemy import and_, desc, asc
@@ -20,9 +20,12 @@ import cv2 as cv
 import os 
 
 
-all_result = APIRouter(
-    prefix="/all_result",
-    tags=["ALL RESULT"],
+
+
+
+test_result = APIRouter(
+    prefix="/test_result",
+    tags=["TEST RESULT"],
     responses={200: {"message": "OK"}}
 )
 
@@ -174,19 +177,19 @@ def paintlabel(img,isReject = True):
 def getTop5Anomaly(db,dataItem:GetAnomalyInfo,procMode):
     dataProc = None
     if(procMode == 1):
-        dataProc  = db.query(ALL_RESULT) \
-                                .where(ALL_RESULT.ACTIVEFLAG == True,
-                                        ALL_RESULT.LOT_NO == dataItem.lotNo,
-                                        ALL_RESULT.LOT_NO_COUNT == dataItem.lotNoCount,
-                                        ALL_RESULT.PROCESS_MODE == procMode) \
-                                .order_by(desc(ALL_RESULT.SCORE_MAX)).limit(5).all()
+        dataProc  = db.query(TEST_RESULT) \
+                                .where(TEST_RESULT.ACTIVEFLAG == True,
+                                        TEST_RESULT.LOT_NO == dataItem.lotNo,
+                                        TEST_RESULT.LOT_NO_COUNT == dataItem.lotNoCount,
+                                        TEST_RESULT.PROCESS_MODE == procMode) \
+                                .order_by(desc(TEST_RESULT.SCORE_MAX)).limit(5).all()
     else:
-        dataProc = db.query(ALL_RESULT) \
-                        .where(ALL_RESULT.ACTIVEFLAG == True,
-                                ALL_RESULT.LOT_NO == dataItem.lotNo,
-                                ALL_RESULT.LOT_NO_COUNT == dataItem.lotNoCount,
-                                ALL_RESULT.PROCESS_MODE == procMode) \
-                        .order_by(desc(ALL_RESULT.DEFECT_PERCENT)).limit(5).all()
+        dataProc = db.query(TEST_RESULT) \
+                        .where(TEST_RESULT.ACTIVEFLAG == True,
+                                TEST_RESULT.LOT_NO == dataItem.lotNo,
+                                TEST_RESULT.LOT_NO_COUNT == dataItem.lotNoCount,
+                                TEST_RESULT.PROCESS_MODE == procMode) \
+                        .order_by(desc(TEST_RESULT.DEFECT_PERCENT)).limit(5).all()
     
     if(dataProc is None):
         return None
@@ -219,11 +222,11 @@ def getTop5Anomaly(db,dataItem:GetAnomalyInfo,procMode):
         return res
 
 def getTimeSeriesData(db,dataItem:GetAnomalyInfo):
-    data : ALL_RESULT = db.query(ALL_RESULT) \
-                    .where(ALL_RESULT.ACTIVEFLAG == True,
-                            ALL_RESULT.LOT_NO == dataItem.lotNo,
-                            ALL_RESULT.LOT_NO_COUNT == dataItem.lotNoCount) \
-                    .order_by(asc(ALL_RESULT.CREATEDATE)).all()
+    data : TEST_RESULT = db.query(TEST_RESULT) \
+                    .where(TEST_RESULT.ACTIVEFLAG == True,
+                            TEST_RESULT.LOT_NO == dataItem.lotNo,
+                            TEST_RESULT.LOT_NO_COUNT == dataItem.lotNoCount) \
+                    .order_by(asc(TEST_RESULT.CREATEDATE)).all()
     if(data is None):
         return None
     if(len(data)== 0):
@@ -302,11 +305,8 @@ def getTimeSeriesData(db,dataItem:GetAnomalyInfo):
 
     return res
 
-
-
-# run result API
-
-@all_result.post("",status_code=200)
+#testResult API
+@test_result.post("",status_code=200)
 def saveData(response:Response,results:List[ImageResultAllModel], db:session = Depends(get_db)):
     if(results is None):
         response.status_code = 400
@@ -314,7 +314,7 @@ def saveData(response:Response,results:List[ImageResultAllModel], db:session = D
     for res in results:
         try:
             unixtime = float((res.imgFileName.split('.')[0]).replace('_','.'))
-            table = ALL_RESULT()
+            table = TEST_RESULT()
             table.LOT_NO = res.lotNo
             table.LOT_NO_COUNT = res.lotNoCount
             table.FILENAME = res.imgFileName
@@ -339,9 +339,9 @@ def saveData(response:Response,results:List[ImageResultAllModel], db:session = D
             pass
     return "OK"
 
-@all_result.get("/lotlist",status_code=200)
-def getlotList(response:Response, db:session = Depends(get_db)):
-    data = db.query(ALL_RESULT.LOT_NO,ALL_RESULT.LOT_NO_COUNT).distinct()
+@test_result.get("/lotlist",status_code=200)
+def getlotList_(response:Response, db:session = Depends(get_db)):
+    data = db.query(TEST_RESULT.LOT_NO,TEST_RESULT.LOT_NO_COUNT).distinct()
     if(data is None):
         response.status_code = 404
         return
@@ -357,7 +357,7 @@ def getlotList(response:Response, db:session = Depends(get_db)):
 
     return res
 
-@all_result.post("/lotAnomalyInfo",status_code=200)
+@test_result.post("/lotAnomalyInfo",status_code=200)
 def getInfo(dataItem:GetAnomalyInfo,response:Response, db:session = Depends(get_db)):
     res = getTimeSeriesData(db,dataItem)
     if(res is None):
@@ -365,7 +365,7 @@ def getInfo(dataItem:GetAnomalyInfo,response:Response, db:session = Depends(get_
         return None
     return res
 
-@all_result.post("/lotAnomalyInfoGraph",status_code=200)
+@test_result.post("/lotAnomalyInfoGraph",status_code=200)
 def getInfo(dataItem:GetAnomalyInfo,response:Response, db:session = Depends(get_db)):
     res = getTimeSeriesData(db,dataItem)
     if(res is None):
@@ -373,7 +373,7 @@ def getInfo(dataItem:GetAnomalyInfo,response:Response, db:session = Depends(get_
         return None
     return plot(res,f'{dataItem.lotNo}_{dataItem.lotNoCount}')
 
-@all_result.post("/gettop5imganormaly",status_code=200)
+@test_result.post("/gettop5imganormaly",status_code=200)
 def gettop5(dataItem:GetAnomalyInfo,response:Response, db:session = Depends(get_db)):
 
     img1 = getTop5Anomaly(db,dataItem,1)
@@ -387,12 +387,12 @@ def gettop5(dataItem:GetAnomalyInfo,response:Response, db:session = Depends(get_
     }
     return res
 
-@all_result.post("/getlistofimgRun/{processMode}",status_code=200)
+@test_result.post("/getlistofimgRun/{processMode}",status_code=200)
 def getofimgrun_inlot(dataItem : GetAnomalyInfo,processMode:int,response:Response, db:session = Depends(get_db)):
-    resDb = db.query(ALL_RESULT.FILENAME).where(ALL_RESULT.ACTIVEFLAG == True,
-                                    ALL_RESULT.LOT_NO == dataItem.lotNo,
-                                    ALL_RESULT.LOT_NO_COUNT == dataItem.lotNoCount,
-                                    ALL_RESULT.PROCESS_MODE == processMode).all()
+    resDb = db.query(TEST_RESULT.FILENAME).where(TEST_RESULT.ACTIVEFLAG == True,
+                                    TEST_RESULT.LOT_NO == dataItem.lotNo,
+                                    TEST_RESULT.LOT_NO_COUNT == dataItem.lotNoCount,
+                                    TEST_RESULT.PROCESS_MODE == processMode).all()
     if(resDb is None):
         response.status_code = 404
         return None
@@ -401,11 +401,11 @@ def getofimgrun_inlot(dataItem : GetAnomalyInfo,processMode:int,response:Respons
         res.append(a['FILENAME'])
     return res
 
-@all_result.get("/image/{fileName}/{processMode}",status_code=200)
+@test_result.get("/image/{fileName}/{processMode}",status_code=200)
 def getImage(filename:str,processMode:int,response:Response, db:session = Depends(get_db)):
-    resDb = db.query(ALL_RESULT).where(ALL_RESULT.ACTIVEFLAG == True,
-                                       ALL_RESULT.FILENAME == filename,
-                                       ALL_RESULT.PROCESS_MODE == processMode).first()
+    resDb = db.query(TEST_RESULT).where(TEST_RESULT.ACTIVEFLAG == True,
+                                       TEST_RESULT.FILENAME == filename,
+                                       TEST_RESULT.PROCESS_MODE == processMode).first()
 
     if(resDb is None):
         response.status_code = 404
@@ -451,67 +451,3 @@ def getImage(filename:str,processMode:int,response:Response, db:session = Depend
         "createDate" : createDate, 
     }
     
-
-# @all_result.post("/getlistofimgRun",status_code=200)
-# def getofimgrun_inlot2(dataItem : GetAnomalyInfo,response:Response, db:session = Depends(get_db)):
-#     resDb = db.query(ALL_RESULT.FILENAME).where(ALL_RESULT.ACTIVEFLAG == True,
-#                                     ALL_RESULT.LOT_NO == dataItem.lotNo,
-#                                     ALL_RESULT.LOT_NO_COUNT == dataItem.lotNoCount).all()
-#     if(resDb is None):
-#         response.status_code = 404
-#         return None
-#     res = []
-#     for a in resDb:
-#         res.append(a['FILENAME'])
-#     return res
-    
-
-# @all_result.get("/image/{fileName}",status_code=200)
-# def getImage2(filename:str,response:Response, db:session = Depends(get_db)):
-    resDb = db.query(ALL_RESULT).where(ALL_RESULT.ACTIVEFLAG == True,
-                                       ALL_RESULT.FILENAME == filename).first()
-
-    if(resDb is None):
-        response.status_code = 404
-        return None
-
-    pathImgRaw = resDb.IMG_RAW_PATH
-    pathImgHeat = resDb.IMG_HEATMAP_PATH
-
-    scoremax = resDb.SCORE_MAX
-    defectpercent = resDb.DEFECT_PERCENT
-    setupVal = resDb.SETUP_VALUE
-    procMode = resDb.PROCESS_MODE
-    lotno = resDb.LOT_NO
-    lotnocount = resDb.LOT_NO_COUNT
-    isReject = resDb.IS_REJECT
-    createDate = resDb.CREATEDATE
-
-    b64ImgRaw = None
-    b64ImgResult = None
-    if(os.path.isfile(pathImgRaw)):
-        img = cv.imread(pathImgRaw,cv.IMREAD_GRAYSCALE)
-        b64ImgRaw = cvimg2base64(img)
-        del img
-    else:
-        b64ImgRaw = imgnotFound()
-    
-    if(os.path.isfile(pathImgHeat)):
-        img = cv.imread(pathImgRaw,cv.IMREAD_COLOR)
-        b64ImgResult = cvimg2base64(img)
-        del img
-    else:
-        b64ImgResult = imgnotFound()
-
-    return {
-        "imgRaw" : b64ImgRaw,
-        "imgHeat" : b64ImgResult,
-        "ams" : scoremax,
-        "defectPercent" : defectpercent,
-        "setupValue" : setupVal,
-        "isReject" : isReject,
-        "procMode" : procMode,
-        "lotNo" :lotno,
-        "lotNoCount" : lotnocount,
-        "createDate" : createDate, 
-    }
