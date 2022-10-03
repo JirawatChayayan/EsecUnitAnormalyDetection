@@ -4,7 +4,7 @@ from fastapi import Depends, Response, status, APIRouter,UploadFile,File
 from db.table import ALL_RESULT
 from db.db import session, get_db
 from resultAll.model import ImageResultAllModel, GetImageModel,GetAnomalyInfo
-from sqlalchemy import and_, desc, asc
+from sqlalchemy import and_, desc, asc,func,text
 from pydantic.datetime_parse import datetime
 import threading 
 import schedule
@@ -451,6 +451,39 @@ def getImage(filename:str,processMode:int,response:Response, db:session = Depend
         "createDate" : createDate, 
     }
     
+@all_result.post("/call_summary_unit_result/{processMode}",status_code=200)
+def get_unit_summary(dataItem:GetAnomalyInfo,processMode :int,response:Response, db:session = Depends(get_db)):
+    if(dataItem is None):
+        response.status_code = 500
+        return None
+    resQuery = db.query(ALL_RESULT.IS_REJECT).where(ALL_RESULT.ACTIVEFLAG == True,
+                                                    ALL_RESULT.LOT_NO == dataItem.lotNo,
+                                                    ALL_RESULT.LOT_NO_COUNT == dataItem.lotNoCount,
+                                                    ALL_RESULT.PROCESS_MODE == processMode).all()
+    if(resQuery is None):
+        response.status_code = 404
+        return None
+
+    if(len(resQuery) == 0):
+        response.status_code = 404
+        return None
+
+    unitALL = 0
+    rejectUnit = 0
+    for a in resQuery:
+        unitALL += 1
+        res = a['IS_REJECT']
+        if(res):
+            rejectUnit += 1
+    goodUnit = unitALL - rejectUnit
+
+    return {
+        "unitAll" : unitALL,
+        "rejectUnit" : rejectUnit,
+        "goodUnit" : goodUnit
+    }
+    
+
 
 # @all_result.post("/getlistofimgRun",status_code=200)
 # def getofimgrun_inlot2(dataItem : GetAnomalyInfo,response:Response, db:session = Depends(get_db)):
@@ -467,51 +500,97 @@ def getImage(filename:str,processMode:int,response:Response, db:session = Depend
     
 
 # @all_result.get("/image/{fileName}",status_code=200)
-# def getImage2(filename:str,response:Response, db:session = Depends(get_db)):
-    resDb = db.query(ALL_RESULT).where(ALL_RESULT.ACTIVEFLAG == True,
-                                       ALL_RESULT.FILENAME == filename).first()
+# def getImage2(filename:str,response:Response, db:session = Depends(get_db)):    # resDb = db.query(ALL_RESULT).where(ALL_RESULT.ACTIVEFLAG == True,
+    #                                    ALL_RESULT.FILENAME == filename).first()
 
-    if(resDb is None):
-        response.status_code = 404
-        return None
+    # if(resDb is None):
+    #     response.status_code = 404
+    #     return None
 
-    pathImgRaw = resDb.IMG_RAW_PATH
-    pathImgHeat = resDb.IMG_HEATMAP_PATH
+    # pathImgRaw = resDb.IMG_RAW_PATH
+    # pathImgHeat = resDb.IMG_HEATMAP_PATH
 
-    scoremax = resDb.SCORE_MAX
-    defectpercent = resDb.DEFECT_PERCENT
-    setupVal = resDb.SETUP_VALUE
-    procMode = resDb.PROCESS_MODE
-    lotno = resDb.LOT_NO
-    lotnocount = resDb.LOT_NO_COUNT
-    isReject = resDb.IS_REJECT
-    createDate = resDb.CREATEDATE
+    # scoremax = resDb.SCORE_MAX
+    # defectpercent = resDb.DEFECT_PERCENT
+    # setupVal = resDb.SETUP_VALUE
+    # procMode = resDb.PROCESS_MODE
+    # lotno = resDb.LOT_NO
+    # lotnocount = resDb.LOT_NO_COUNT
+    # isReject = resDb.IS_REJECT
+    # createDate = resDb.CREATEDATE
 
-    b64ImgRaw = None
-    b64ImgResult = None
-    if(os.path.isfile(pathImgRaw)):
-        img = cv.imread(pathImgRaw,cv.IMREAD_GRAYSCALE)
-        b64ImgRaw = cvimg2base64(img)
-        del img
-    else:
-        b64ImgRaw = imgnotFound()
+    # b64ImgRaw = None
+    # b64ImgResult = None
+    # if(os.path.isfile(pathImgRaw)):
+    #     img = cv.imread(pathImgRaw,cv.IMREAD_GRAYSCALE)
+    #     b64ImgRaw = cvimg2base64(img)
+    #     del img
+    # else:
+    #     b64ImgRaw = imgnotFound()
     
-    if(os.path.isfile(pathImgHeat)):
-        img = cv.imread(pathImgRaw,cv.IMREAD_COLOR)
-        b64ImgResult = cvimg2base64(img)
-        del img
-    else:
-        b64ImgResult = imgnotFound()
+    # if(os.path.isfile(pathImgHeat)):
+    #     img = cv.imread(pathImgRaw,cv.IMREAD_COLOR)
+    #     b64ImgResult = cvimg2base64(img)
+    #     del img
+    # else:
+    #     b64ImgResult = imgnotFound()
 
-    return {
-        "imgRaw" : b64ImgRaw,
-        "imgHeat" : b64ImgResult,
-        "ams" : scoremax,
-        "defectPercent" : defectpercent,
-        "setupValue" : setupVal,
-        "isReject" : isReject,
-        "procMode" : procMode,
-        "lotNo" :lotno,
-        "lotNoCount" : lotnocount,
-        "createDate" : createDate, 
-    }
+    # return {
+    #     "imgRaw" : b64ImgRaw,
+    #     "imgHeat" : b64ImgResult,
+    #     "ams" : scoremax,
+    #     "defectPercent" : defectpercent,
+    #     "setupValue" : setupVal,
+    #     "isReject" : isReject,
+    #     "procMode" : procMode,
+    #     "lotNo" :lotno,
+    #     "lotNoCount" : lotnocount,
+    #     "createDate" : createDate, 
+    # }
+    # resDb = db.query(ALL_RESULT).where(ALL_RESULT.ACTIVEFLAG == True,
+    #                                    ALL_RESULT.FILENAME == filename).first()
+
+    # if(resDb is None):
+    #     response.status_code = 404
+    #     return None
+
+    # pathImgRaw = resDb.IMG_RAW_PATH
+    # pathImgHeat = resDb.IMG_HEATMAP_PATH
+
+    # scoremax = resDb.SCORE_MAX
+    # defectpercent = resDb.DEFECT_PERCENT
+    # setupVal = resDb.SETUP_VALUE
+    # procMode = resDb.PROCESS_MODE
+    # lotno = resDb.LOT_NO
+    # lotnocount = resDb.LOT_NO_COUNT
+    # isReject = resDb.IS_REJECT
+    # createDate = resDb.CREATEDATE
+
+    # b64ImgRaw = None
+    # b64ImgResult = None
+    # if(os.path.isfile(pathImgRaw)):
+    #     img = cv.imread(pathImgRaw,cv.IMREAD_GRAYSCALE)
+    #     b64ImgRaw = cvimg2base64(img)
+    #     del img
+    # else:
+    #     b64ImgRaw = imgnotFound()
+    
+    # if(os.path.isfile(pathImgHeat)):
+    #     img = cv.imread(pathImgRaw,cv.IMREAD_COLOR)
+    #     b64ImgResult = cvimg2base64(img)
+    #     del img
+    # else:
+    #     b64ImgResult = imgnotFound()
+
+    # return {
+    #     "imgRaw" : b64ImgRaw,
+    #     "imgHeat" : b64ImgResult,
+    #     "ams" : scoremax,
+    #     "defectPercent" : defectpercent,
+    #     "setupValue" : setupVal,
+    #     "isReject" : isReject,
+    #     "procMode" : procMode,
+    #     "lotNo" :lotno,
+    #     "lotNoCount" : lotnocount,
+    #     "createDate" : createDate, 
+    # }
