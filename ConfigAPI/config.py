@@ -13,7 +13,7 @@ class AIConfig():
         self.useAI = False
         self.inferenceRate = 5
         self.modeInspect = 2
-
+        self.useStopMachine = False
         self.bboxCrop = {
             "R1" : 194,
             "C1" : 279,
@@ -201,6 +201,7 @@ class AIConfig():
             useAI = bool(newParam.useAI)
             inferenceRate = int(newParam.inferenceRate)
             modeInspec = int(newParam.modeInspect)
+            useStopMachine = bool(newParam.useStopMachine)
 
             self.machineId = machineId
             self.stopWhenRejectCount = stopWhenRejectCount
@@ -209,6 +210,7 @@ class AIConfig():
             self.useAI = useAI
             self.inferenceRate = inferenceRate
             self.modeInspect = modeInspec
+            self.useStopMachine = useStopMachine
             self.saveconfig()
             return True
         except Exception as ex:
@@ -224,6 +226,7 @@ class AIConfig():
             useAI = bool(newParam['useAI'])
             inferenceRate = int(newParam['inferenceRate'])
             modeInspec = int(newParam['modeInspect'])
+            useStopMachine = bool(newParam['useStopMachine'])
 
             R1 = int(newParam['bboxCrop']['R1'])
             C1 = int(newParam['bboxCrop']['C1'])
@@ -254,6 +257,7 @@ class AIConfig():
             self.useAI = useAI
             self.inferenceRate = inferenceRate
             self.modeInspect = modeInspec
+            self.useStopMachine = useStopMachine
             self.bboxCrop = {
                 "R1" : R1,
                 "C1" : C1,
@@ -291,6 +295,7 @@ class AIConfig():
                     "maxProcessTimePerUnit" :int(self.maxProcessTimePerUnit),
                     "useAI" : self.useAI,
                     "inferenceRate" : self.inferenceRate,
+                    "useStopMachine" : self.useStopMachine,
                     "bboxCrop" : self.bboxCrop,
                     "modeInspect" : self.modeInspect,
                     "processParameter" : self.processParameter,

@@ -26,6 +26,7 @@ class ConfigModel(BaseModel):
     useAI:bool = False
     inferenceRate:int = 5
     modeInspect:int = 1
+    useStopMachine:bool = False
 
 class bbox(BaseModel):
     R1 :int = 194
