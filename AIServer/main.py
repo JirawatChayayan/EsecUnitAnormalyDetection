@@ -277,8 +277,7 @@ def findmatching(item :MatData,response:Response):
         response.status_code = 500
         return "Error to find matching"
 
-
-@ai.post("/test_process",status_code=200)
+@ai.get("/test_process",status_code=200)
 def testProcess(response:Response):
     global inProcess
     if(inProcess):
@@ -346,8 +345,6 @@ def infer(item :InferModel,response:Response):
     else:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     return result
-
-
 
 app.include_router(ai)
 
